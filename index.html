@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PokéPrice — 포켓몬 카드 시세</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --surface2: #1e2230;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.14);
+    --gold: #f0b429;
+    --gold2: #ffd166;
+    --text: #e8eaf0;
+    --muted: #7b8097;
+    --dim: #444860;
+    --red: #ff6b6b;
+    --green: #4ecb8d;
+    --blue: #5b9cf6;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(240,180,41,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 80% 100%, rgba(91,156,246,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 2rem 2rem 0;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  /* HEADER TOP ROW */
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+  }
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    cursor: pointer;
+    width: fit-content;
+    transition: opacity 0.15s;
+    user-select: none;
+  }
+  .logo:hover  { opacity: 0.82; }
+  .logo:active { opacity: 0.6; }
+  .logo-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 2px;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .logo-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+  .header-desc {
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 1.5rem;
+  }
+  .about-btn {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    white-space: nowrap;
+    align-self: center;
+  }
+  .about-btn:hover { color: var(--text); border-color: var(--dim); background: var(--surface); }
+
+  /* ABOUT PAGE */
+  .about-page {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 500;
+    overflow-y: auto;
+    padding: 2rem;
+    animation: fadeInAbout 0.2s ease;
+  }
+  .about-page.open { display: block; }
+  @keyframes fadeInAbout { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .about-inner { max-width: 680px; margin: 0 auto; }
+  .about-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    margin-bottom: 2rem;
+    transition: all 0.15s;
+  }
+  .about-back:hover { color: var(--text); border-color: var(--dim); }
+  .about-logo    { font-family: 'Bebas Neue', sans-serif; font-size: 2.5rem; color: var(--gold); letter-spacing: 2px; margin-bottom: 0.25rem; }
+  .about-tagline { font-size: 14px; color: var(--muted); margin-bottom: 2rem; line-height: 1.6; }
+  .about-section { margin-bottom: 2rem; }
+  .about-section-title {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 10px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .about-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+  .about-card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .about-card-desc  { font-size: 13px; color: var(--muted); line-height: 1.65; }
+  .about-card-link  { font-size: 12px; color: var(--blue); text-decoration: none; margin-top: 6px; display: inline-block; }
+  .about-card-link:hover { text-decoration: underline; }
+  .data-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    margin-bottom: 8px;
+  }
+  .data-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); flex-shrink: 0;
+    animation: blinkDot 2s ease-in-out infinite;
+  }
+  .data-dot.off { background: var(--dim); animation: none; }
+  @keyframes blinkDot { 0%,100%{opacity:1} 50%{opacity:0.25} }
+  .data-label { font-size: 13px; color: var(--text); font-weight: 500; flex: 1; }
+  .data-val   { font-size: 12px; color: var(--muted); }
+  .about-footer {
+    font-size: 12px; color: var(--dim);
+    text-align: center; margin-top: 3rem; line-height: 1.9;
+    border-top: 1px solid var(--border); padding-top: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .about-page  { padding: 1.25rem 1rem; }
+    .about-logo  { font-size: 2rem; }
+    .about-btn   { font-size: 11px; padding: 4px 11px; }
+  }
+
+  /* SEARCH ROW */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .search-wrap {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem 0.7rem 2.75rem;
+    color: var(--text);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--gold); }
+  input[type="text"]::placeholder { color: var(--muted); }
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  select:focus { border-color: var(--gold); }
+  .btn {
+    background: var(--gold);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.7rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1400;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--gold2); }
+  .btn:active { transform: scale(0.97); }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    padding: 0.7rem 1rem;
+  }
+  .btn-ghost:hover { border-color: var(--border); color: var(--text); background: var(--surface); }
+
+  /* CHIPS */
+  .chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .chip:hover { color: var(--text); border-color: var(--dim); }
+  .chip.active { background: var(--gold); border-color: var(--gold); color: #1a1400; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .stats-bar strong { color: var(--text); }
+  .divider-v { width: 1px; height: 14px; background: var(--border2); }
+
+  /* MAIN */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+  }
+
+  /* STATUS */
+  .status-msg {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 0.5rem 0;
+    min-height: 24px;
+  }
+  .status-msg.loading { color: var(--gold); }
+  .status-msg.error { color: var(--red); }
+
+  /* GRID */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(240,180,41,0.4);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(240,180,41,0.08);
+  }
+  .card-img-wrap {
+    position: relative;
+    background: var(--surface2);
+    aspect-ratio: 3/4;
+    overflow: hidden;
+  }
+  .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+  }
+  .card:hover .card-img-wrap img { transform: scale(1.03); }
+  .card-img-wrap .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dim);
+    font-size: 32px;
+  }
+  .rarity-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.75);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--muted);
+    backdrop-filter: blur(4px);
+  }
+  .card-body { padding: 10px 12px 12px; }
+  .card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+  .card-set {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-top: 1px solid var(--border);
+  }
+  .price-row:first-of-type { border-top: none; padding-top: 0; }
+  .price-grade { font-size: 10px; color: var(--muted); }
+  .price-val { font-size: 13px; font-weight: 600; color: var(--gold); }
+  .price-val.none { color: var(--dim); font-weight: 400; font-size: 12px; }
+  .price-range { font-size: 10px; color: var(--dim); }
+
+  /* CARD BUY BUTTON */
+  .card-footer {
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 6px;
+  }
+  .card-buy-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 0;
+    background: var(--gold);
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a1400;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .card-buy-btn:hover { background: var(--gold2); transform: scale(1.02); }
+  .card-buy-btn:active { transform: scale(0.97); }
+  .card-buy-btn.disabled {
+    background: var(--surface2);
+    color: var(--dim);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .card-buy-btn .btn-icon { font-size: 13px; }
+
+  /* FAVORITES HEART BUTTON */
+  .fav-btn {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.15s;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+    line-height: 1;
+    padding: 0;
+  }
+  .fav-btn:hover { transform: scale(1.15); background: rgba(0,0,0,0.8); }
+  .fav-btn.active { background: rgba(220,50,80,0.85); border-color: rgba(255,100,120,0.5); }
+  .fav-btn .heart { transition: transform 0.15s; display: inline-block; }
+  .fav-btn:hover .heart { transform: scale(1.2); }
+
+  /* FAVORITED CARD GLOW */
+  .card.favorited { border-color: rgba(220,50,80,0.4); }
+  .card.favorited:hover { border-color: rgba(220,50,80,0.7); box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 20px rgba(220,50,80,0.12); }
+
+  /* FAV MODE BANNER */
+  .fav-mode-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(220,50,80,0.1);
+    border: 1px solid rgba(220,50,80,0.3);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    color: #ff8fa0;
+  }
+  .fav-mode-banner.show { display: flex; }
+  .fav-mode-banner strong { color: #ff6b80; }
+  .fav-clear-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid rgba(220,50,80,0.4);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: #ff8fa0;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .fav-clear-btn:hover { background: rgba(220,50,80,0.15); }
+
+  /* FAV TAB BUTTON */
+  .btn-fav {
+    background: transparent;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 0.7rem 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-fav:hover { color: var(--text); border-color: var(--dim); }
+  .btn-fav.active { background: rgba(220,50,80,0.12); border-color: rgba(220,50,80,0.45); color: #ff8fa0; }
+  .fav-count {
+    background: #dc3250;
+    color: #fff;
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+    display: none;
+  }
+  .fav-count.show { display: inline-block; }
+
+  /* TRANSLATION BANNER */
+  .translate-banner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(91,156,246,0.08);
+    border: 1px solid rgba(91,156,246,0.25);
+    border-radius: var(--radius);
+    padding: 9px 14px;
+    margin-bottom: 1rem;
+    font-size: 13px;
+    color: #7ab3f5;
+    flex-wrap: wrap;
+  }
+  .translate-banner.show { display: flex; }
+  .translate-banner .tl-orig { font-weight: 600; color: #a0c4f8; }
+  .translate-banner .tl-arrow { color: var(--dim); }
+  .translate-banner .tl-eng { font-weight: 600; color: #fff; }
+  .translate-banner .tl-lang {
+    font-size: 11px;
+    background: rgba(91,156,246,0.15);
+    border: 1px solid rgba(91,156,246,0.25);
+    border-radius: 6px;
+    padding: 1px 8px;
+    color: #7ab3f5;
+  }
+  .translate-banner .tl-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--dim);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    line-height: 1;
+  }
+  .translate-banner .tl-close:hover { color: var(--muted); }
+
+  /* FAV EMPTY */
+  .fav-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  .fav-empty-icon { font-size: 48px; margin-bottom: 1rem; }
+  .fav-empty h3 { font-size: 18px; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; }
+  .fav-empty p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+  /* IMAGE HOVER OVERLAY */
+  .img-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    backdrop-filter: blur(2px);
+  }
+  .card:hover .img-overlay { opacity: 1; }
+  .overlay-text {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  /* SET FILTER PANEL */
+  .set-filter-panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .set-select-wrap { position: relative; flex: 1; min-width: 200px; }
+  .set-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 12px;
+    pointer-events: none;
+  }
+  #setSelect {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 7px 30px 7px 12px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    transition: border-color 0.15s;
+  }
+  #setSelect:focus { border-color: var(--gold); }
+  #setSelect option { background: var(--surface2); }
+  #setSelect optgroup { color: var(--muted); font-size: 11px; }
+  .set-badge {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: rgba(91,156,246,0.1);
+    border: 1px solid rgba(91,156,246,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--blue);
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .set-badge.show { display: flex; }
+  .set-badge:hover { background: rgba(91,156,246,0.18); }
+  .set-info {
+    font-size: 11px;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+  .browse-set-btn {
+    background: var(--surface2);
+    border: 1px solid rgba(91,156,246,0.35);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--blue);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: none;
+  }
+  .browse-set-btn.show { display: block; }
+  .browse-set-btn:hover { background: rgba(91,156,246,0.1); }
+  .set-loading {
+    font-size: 12px;
+    color: var(--muted);
+    display: none;
+  }
+  .set-loading.show { display: block; }
+
+  /* PRICE FILTER PANEL */
+  .filter-panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .filter-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .preset-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .preset-btn:hover { color: var(--text); border-color: var(--dim); }
+  .preset-btn.active {
+    background: rgba(240,180,41,0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+  .filter-divider { width: 1px; height: 20px; background: var(--border2); flex-shrink: 0; }
+  .filter-custom {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .filter-custom span { font-size: 12px; color: var(--muted); }
+  .price-input {
+    width: 72px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 4px 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.15s;
+    text-align: center;
+  }
+  .price-input:focus { border-color: var(--gold); }
+  .price-input::placeholder { color: var(--dim); }
+  .apply-filter-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .apply-filter-btn:hover { background: rgba(240,180,41,0.1); border-color: var(--gold); }
+  .filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+    user-select: none;
+  }
+  .toggle-box {
+    width: 32px;
+    height: 18px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 9px;
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-box::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--dim);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle-input { display: none; }
+  .toggle-input:checked + .toggle-box { background: rgba(240,180,41,0.2); border-color: var(--gold); }
+  .toggle-input:checked + .toggle-box::after { transform: translateX(14px); background: var(--gold); }
+  .filter-active-badge {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    background: rgba(240,180,41,0.12);
+    border: 1px solid rgba(240,180,41,0.35);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .filter-active-badge.show { display: flex; }
+
+  /* EMPTY */
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 5rem 2rem;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 1rem; color: var(--dim); }
+  .empty h3 { font-size: 18px; font-weight: 500; color: var(--text); margin-bottom: 0.5rem; }
+  .empty p { font-size: 14px; line-height: 1.6; }
+
+  /* SKELETON */
+  .skeleton { background: var(--surface2); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .skeleton-img { aspect-ratio: 3/4; background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+  .skeleton-body { padding: 10px 12px 12px; }
+  .skeleton-line { height: 10px; border-radius: 5px; background: var(--surface); margin-bottom: 8px; animation: shimmer 1.4s infinite; }
+  .skeleton-line.short { width: 60%; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    max-width: 680px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform: scale(0.96) translateY(8px); }
+    to   { opacity:1; transform: scale(1)    translateY(0); }
+  }
+  /* 모바일: 바텀시트 */
+  @media (max-width: 768px) {
+    @keyframes modalIn {
+      from { opacity:1; transform: translateY(100%); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--border); }
+  .modal-inner { padding: 1.5rem; }
+  .modal-top {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  .modal-img {
+    width: 160px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    display: block;
+  }
+  .modal-meta { flex: 1; }
+  .modal-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .modal-set { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .modal-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tag {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .modal-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1400;
+    text-decoration: none;
+    background: var(--gold);
+    border-radius: 10px;
+    padding: 10px 20px;
+    margin-top: 4px;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .modal-link:hover { background: var(--gold2); transform: scale(1.01); }
+  .modal-link:active { transform: scale(0.98); }
+  .modal-link-icon { font-size: 16px; }
+
+  /* PRICE TABLE */
+  .price-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .price-table-wrap { overflow-x: auto; margin-bottom: 1.25rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    text-align: left;
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 11px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 10px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: rgba(255,255,255,0.02); }
+  .td-grade { font-weight: 500; color: var(--text); }
+  .td-market { font-weight: 600; font-size: 15px; color: var(--gold); }
+  .td-low { color: var(--green); }
+  .td-high { color: var(--red); }
+  .td-mid { color: var(--muted); }
+
+  /* NOTICE */
+  .notice {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.7;
+  }
+  .notice strong { color: var(--muted); }
+
+  /* PAGINATION */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 2.5rem;
+  }
+  .page-btn {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .page-btn:hover { color: var(--text); border-color: var(--dim); }
+  .page-btn.active { background: var(--gold); border-color: var(--gold); color: #1a1400; font-weight: 600; }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; }
+
+  /* ── 희귀도·타입 필터 패널 ── */
+  .rarity-filter-panel {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rarity-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .rarity-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+  .r-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .r-chip:hover { color: var(--text); border-color: var(--dim); }
+  .r-chip.active { background: rgba(240,180,41,0.15); border-color: var(--gold); color: var(--gold); }
+
+  /* ── 최근 본 카드 섹션 ── */
+  .recent-section {
+    margin-bottom: 1.5rem;
+    display: none;
+  }
+  .recent-section.show { display: block; }
+  .recent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .recent-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .recent-clear {
+    font-size: 11px;
+    color: var(--dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: color 0.15s;
+    padding: 0;
+  }
+  .recent-clear:hover { color: var(--red); }
+  .recent-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+  }
+  .recent-scroll::-webkit-scrollbar { height: 3px; }
+  .recent-scroll::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+  .recent-card {
+    flex-shrink: 0;
+    width: 90px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .recent-card:hover { transform: translateY(-3px); border-color: rgba(240,180,41,0.4); }
+  .recent-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+  .recent-card-name {
+    font-size: 10px;
+    color: var(--muted);
+    padding: 4px 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 768px) {
+    .rarity-filter-panel { padding: 12px 14px; }
+    .r-chip { padding: 5px 10px; font-size: 11px; min-height: 34px; }
+    .recent-card { width: 80px; }
+  }
+
+  /* ── MOBILE 최적화 (max-width: 768px) ─────────────────────────── */
+  @media (max-width: 768px) {
+
+    /* 헤더·메인 여백 */
+    header { padding: 1.25rem 1rem 0; }
+    main   { padding: 0 1rem 3rem; }
+
+    /* 로고 */
+    .logo-title { font-size: 2.2rem; }
+    .logo-sub   { font-size: 12px; }
+    .header-desc { font-size: 12px; margin-bottom: 1.25rem; }
+
+    /* ── 검색창: 입력창 전체 너비, 버튼 2열 ── */
+    .search-row { gap: 8px; }
+    .search-wrap {
+      flex: 1 1 100%;   /* 첫 줄 전체 너비 */
+      min-width: 0;
+    }
+    input[type="text"] { font-size: 16px; } /* iOS 자동 확대 방지 */
+    #sortSelect  { flex: 1; min-height: 44px; font-size: 14px; }
+    .btn-fav     { flex: 1; min-height: 44px; justify-content: center; font-size: 13px; }
+    .btn         { flex: 1; min-height: 44px; font-size: 14px; padding: 0; }
+    .btn-ghost   { flex: 1; min-height: 44px; font-size: 13px; padding: 0; }
+
+    /* ── 칩 ── */
+    .chips { gap: 6px; margin-bottom: 1rem; }
+    .chip  { padding: 6px 12px; font-size: 12px; min-height: 34px; }
+
+    /* ── 세트 필터 패널 ── */
+    .set-filter-panel {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 12px 14px;
+    }
+    .set-select-wrap { width: 100%; }
+    #setSelect       { min-height: 44px; font-size: 14px; }
+    .browse-set-btn  { width: 100%; min-height: 44px; font-size: 13px; display: none; }
+    .browse-set-btn.show { display: block; }
+    .set-info        { font-size: 12px; }
+    .set-badge       { width: fit-content; }
+
+    /* ── 가격 필터 패널 ── */
+    .filter-panel {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+    .filter-presets { width: 100%; }
+    .preset-btn     { min-height: 38px; font-size: 12px; padding: 6px 10px; }
+    .filter-divider { display: none; } /* 구분선 숨김 */
+    .filter-custom  { width: 100%; }
+    .price-input    { flex: 1; width: auto; min-height: 40px; font-size: 14px; }
+    .apply-filter-btn { min-height: 40px; padding: 0 14px; font-size: 13px; }
+    .filter-toggle  { width: 100%; padding: 4px 0; }
+
+    /* ── 통계바 ── */
+    .stats-bar { font-size: 12px; gap: 0.75rem; flex-wrap: wrap; }
+
+    /* ── 카드 그리드: 2열 고정 ── */
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .card-name  { font-size: 12px; }
+    .card-set   { font-size: 10px; }
+    .price-val  { font-size: 12px; }
+    .price-grade { font-size: 10px; }
+    .card-buy-btn { font-size: 11px; padding: 7px 0; }
+
+    /* ── 모달 ── */
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal {
+      border-radius: 16px 16px 0 0;
+      max-height: 92vh;
+      width: 100%;
+    }
+    .modal-inner   { padding: 1.25rem 1rem; }
+    .modal-top     { flex-direction: column; align-items: center; gap: 1rem; }
+    .modal-img     { width: 110px; }
+    .modal-name    { font-size: 1.6rem; text-align: center; }
+    .modal-set     { text-align: center; }
+    .modal-tags    { justify-content: center; }
+    .modal-link    { font-size: 13px; }
+    table          { font-size: 12px; }
+    thead th       { padding: 6px 8px; font-size: 10px; }
+    tbody td       { padding: 8px; }
+    .td-market     { font-size: 13px; }
+    .notice        { font-size: 11px; }
+
+    /* ── 페이지네이션 간소화 ── */
+    .page-btn { padding: 6px 10px; font-size: 12px; }
+
+    /* ── 번역 배너 ── */
+    .translate-banner { font-size: 12px; gap: 6px; }
+
+    /* ── 빈화면 ── */
+    .empty { padding: 3rem 1rem; }
+    .empty-icon { font-size: 36px; }
+  }
+
+  /* 아주 좁은 화면 (320px) */
+  @media (max-width: 360px) {
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .logo-title { font-size: 1.8rem; }
+    .chip { padding: 5px 9px; font-size: 11px; }
+  }
+
+  /* ── 메인 탭 네비게이션 ──────────────────────────────────────────── */
+  .main-nav {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border2);
+    margin: 0 0 1.5rem;
+    padding-bottom: 0;
+  }
+  .main-nav-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    white-space: nowrap;
+    margin-bottom: -1px;
+  }
+  .main-nav-tab:hover { color: var(--text); }
+  .main-nav-tab.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+    font-weight: 600;
+  }
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+  @media (max-width: 768px) {
+    .main-nav-tab { padding: 10px 12px; font-size: 12px; }
+  }
+
+  /* ── 행사 페이지 ─────────────────────────────────────────────────── */
+  .events-wrap { max-width: 1400px; margin: 0 auto; padding: 0 2rem 4rem; }
+  .country-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .ctab {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .ctab:hover { color: var(--text); border-color: var(--dim); }
+  .ctab.active { background: var(--gold); border-color: var(--gold); color: #1a1400; font-weight: 600; }
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    margin-bottom: 2rem;
+  }
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    transition: border-color 0.15s;
+  }
+  .event-card:hover { border-color: var(--border2); }
+  .event-card.featured { border-color: rgba(240,180,41,0.35); background: rgba(240,180,41,0.03); }
+  .event-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .et-world  { background: rgba(240,180,41,0.15); color: var(--gold); }
+  .et-intl   { background: rgba(91,156,246,0.12); color: var(--blue); }
+  .et-local  { background: rgba(78,203,141,0.12); color: var(--green); }
+  .et-news   { background: rgba(255,255,255,0.06); color: var(--muted); }
+  .event-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; line-height: 1.35; }
+  .event-meta  { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .event-meta span { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .event-desc  { font-size: 12px; color: var(--dim); line-height: 1.6; margin-bottom: 10px; }
+  .event-link  {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--blue); text-decoration: none;
+    border: 1px solid rgba(91,156,246,0.3); border-radius: 8px;
+    padding: 4px 12px; transition: background 0.15s;
+  }
+  .event-link:hover { background: rgba(91,156,246,0.08); }
+  .events-source-note {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 12px;
+    color: var(--dim);
+    line-height: 1.7;
+    margin-top: 1rem;
+  }
+  .events-source-note strong { color: var(--muted); }
+  .official-links {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .official-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .official-link:hover { border-color: var(--dim); background: var(--surface); }
+
+  @media (max-width: 768px) {
+    .events-wrap { padding: 0 1rem 3rem; }
+    .events-grid { grid-template-columns: 1fr; gap: 10px; }
+    .event-card { padding: 13px; }
+    .event-title { font-size: 14px; }
+  }
+
+  /* ── 인기 순위 페이지 ────────────────────────────────────────────── */
+  .trending-wrap { max-width: 1400px; margin: 0 auto; padding: 0 2rem 4rem; }
+  .trending-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .section-heading {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* 랭킹 리스트 */
+  .rank-list { display: flex; flex-direction: column; gap: 8px; }
+  .rank-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .rank-item:hover { border-color: var(--border2); transform: translateX(2px); }
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--dim);
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .rank-num.top3 { color: var(--gold); }
+  .rank-img { width: 44px; height: 44px; object-fit: contain; flex-shrink: 0; border-radius: 6px; background: var(--surface2); }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rank-set  { font-size: 11px; color: var(--dim); margin-top: 1px; }
+  .rank-price-col { text-align: right; flex-shrink: 0; }
+  .rank-price { font-size: 14px; font-weight: 700; color: var(--gold); }
+  .rank-change { font-size: 10px; margin-top: 2px; }
+  .rank-change.up   { color: var(--green); }
+  .rank-change.down { color: var(--red); }
+  .rank-change.flat { color: var(--dim); }
+
+  /* 가격 범위 차트 */
+  .chart-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .chart-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .chart-sub   { font-size: 11px; color: var(--dim); margin-bottom: 16px; }
+  .chart-rows  { display: flex; flex-direction: column; gap: 14px; }
+  .chart-row   { display: flex; flex-direction: column; gap: 4px; }
+  .chart-row-label { display: flex; justify-content: space-between; font-size: 11px; }
+  .chart-row-name  { color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+  .chart-row-price { color: var(--gold); font-weight: 600; }
+  .chart-bar-bg {
+    height: 8px; background: var(--surface2);
+    border-radius: 4px; position: relative; overflow: visible;
+  }
+  .chart-bar-range {
+    position: absolute; height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--green), var(--gold));
+    min-width: 4px;
+  }
+  .chart-bar-market {
+    position: absolute; top: -3px; width: 3px; height: 14px;
+    background: #fff; border-radius: 2px; opacity: 0.9;
+    transform: translateX(-50%);
+  }
+  .chart-legend {
+    display: flex; gap: 12px; margin-top: 14px;
+    flex-wrap: wrap; font-size: 10px; color: var(--dim);
+  }
+  .chart-legend span { display: flex; align-items: center; gap: 4px; }
+  .leg-bar { width: 16px; height: 6px; border-radius: 3px; }
+  .leg-line { width: 3px; height: 12px; background: #fff; border-radius: 2px; opacity: 0.7; }
+
+  .trending-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .trending-loading .spin {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 768px) {
+    .trending-wrap { padding: 0 1rem 3rem; }
+    .trending-grid { grid-template-columns: 1fr; }
+    .rank-item { padding: 9px 10px; }
+    .rank-num  { font-size: 1.1rem; width: 22px; }
+    .rank-img  { width: 38px; height: 38px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo" onclick="goHome()" title="홈으로">
+      <span class="logo-title">PokéPrice</span>
+      <span class="logo-sub">포켓몬 카드 시세 트래커</span>
+    </div>
+    <button class="about-btn" onclick="openAbout()">ℹ️ About</button>
+  </div>
+  <p class="header-desc">미국 TCGPlayer 실시간 시세 · Pokémon TCG API 데이터</p>
+
+  <div class="search-row">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput"
+        placeholder="카드 이름 검색 (한글·日本語·English)"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        enterkeyhint="search"
+      />
+    </div>
+    <select id="sortSelect">
+      <option value="date">최신순</option>
+      <option value="price-desc">가격 높은순</option>
+      <option value="price-asc">가격 낮은순</option>
+      <option value="name">이름순</option>
+    </select>
+    <button class="btn-fav" id="favTabBtn" onclick="toggleFavMode()">
+      ❤️ 즐겨찾기 <span class="fav-count" id="favCount">0</span>
+    </button>
+    <button class="btn" onclick="doSearch(1)">검색</button>
+    <button class="btn btn-ghost" onclick="resetSearch()">초기화</button>
+  </div>
+
+  <div class="chips" id="quickChips">
+    <span class="chip active" data-q="Charizard">🔥 Charizard</span>
+    <span class="chip" data-q="Pikachu">⚡ Pikachu</span>
+    <span class="chip" data-q="Mewtwo">🧬 Mewtwo</span>
+    <span class="chip" data-q="Eevee">🌟 Eevee</span>
+    <span class="chip" data-q="Gengar">👻 Gengar</span>
+    <span class="chip" data-q="Rayquaza">🐉 Rayquaza</span>
+    <span class="chip" data-q="Umbreon">🌙 Umbreon</span>
+    <span class="chip" data-q="Lugia">🌊 Lugia</span>
+  </div>
+
+  <!-- SET FILTER PANEL -->
+  <div class="set-filter-panel">
+    <span class="filter-label">📦 세트</span>
+    <div class="set-select-wrap">
+      <select id="setSelect" onchange="onSetChange(this.value)">
+        <option value="">⬇ 세트 목록 불러오는 중...</option>
+      </select>
+    </div>
+    <span class="set-info" id="setInfo"></span>
+    <button class="browse-set-btn" id="browseSetBtn" onclick="browseSet()">
+      이 세트 전체 보기 →
+    </button>
+    <span class="set-badge" id="setBadge" onclick="clearSetFilter()">
+      📦 <span id="setBadgeText"></span> · 해제 ✕
+    </span>
+  </div>
+
+  <!-- PRICE FILTER PANEL -->
+  <div class="filter-panel">
+    <span class="filter-label">💵 가격대</span>
+    <div class="filter-presets">
+      <button class="preset-btn active" data-min="" data-max="" onclick="applyPreset(this)">전체</button>
+      <button class="preset-btn" data-min="0" data-max="10" onclick="applyPreset(this)">$10 이하</button>
+      <button class="preset-btn" data-min="10" data-max="50" onclick="applyPreset(this)">$10 ~ $50</button>
+      <button class="preset-btn" data-min="50" data-max="200" onclick="applyPreset(this)">$50 ~ $200</button>
+      <button class="preset-btn" data-min="200" data-max="" onclick="applyPreset(this)">$200 이상</button>
+    </div>
+    <div class="filter-divider"></div>
+    <div class="filter-custom">
+      <span>$</span>
+      <input type="number" inputmode="decimal" class="price-input" id="priceMin" placeholder="최솟값" min="0" />
+      <span>~</span>
+      <input type="number" inputmode="decimal" class="price-input" id="priceMax" placeholder="최댓값" min="0" />
+      <button class="apply-filter-btn" onclick="applyCustomFilter()">적용</button>
+    </div>
+    <div class="filter-divider"></div>
+    <label class="filter-toggle">
+      <input type="checkbox" class="toggle-input" id="hideNoPrice" />
+      <div class="toggle-box"></div>
+      시세 없는 카드 숨기기
+    </label>
+  </div>
+  <!-- RARITY · TYPE FILTER PANEL -->
+  <div class="rarity-filter-panel">
+    <div class="rarity-row">
+      <span class="filter-label">⭐ 희귀도</span>
+      <div class="rarity-chips" id="rarityChips">
+        <button class="r-chip active" data-type="rarity" data-val="">전체</button>
+        <button class="r-chip" data-type="rarity" data-val="Common">Common</button>
+        <button class="r-chip" data-type="rarity" data-val="Uncommon">Uncommon</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare">Rare</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Holo">Holo Rare</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Holo EX">EX</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Holo GX">GX</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Holo V">V</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Holo VMAX">VMAX</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Holo VSTAR">VSTAR</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Ultra">Ultra Rare</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Secret">Secret Rare</button>
+        <button class="r-chip" data-type="rarity" data-val="Rare Rainbow">Rainbow</button>
+        <button class="r-chip" data-type="rarity" data-val="Illustration Rare">Illus. Rare</button>
+        <button class="r-chip" data-type="rarity" data-val="Special Illustration Rare">Special Illus.</button>
+        <button class="r-chip" data-type="rarity" data-val="Hyper Rare">Hyper Rare</button>
+      </div>
+    </div>
+    <div class="rarity-row">
+      <span class="filter-label">🔥 타입</span>
+      <div class="rarity-chips" id="typeChips">
+        <button class="r-chip active" data-type="etype" data-val="">전체</button>
+        <button class="r-chip" data-type="etype" data-val="Fire">🔥 불꽃</button>
+        <button class="r-chip" data-type="etype" data-val="Water">💧 물</button>
+        <button class="r-chip" data-type="etype" data-val="Grass">🍃 풀</button>
+        <button class="r-chip" data-type="etype" data-val="Lightning">⚡ 전기</button>
+        <button class="r-chip" data-type="etype" data-val="Psychic">🔮 에스퍼</button>
+        <button class="r-chip" data-type="etype" data-val="Fighting">👊 격투</button>
+        <button class="r-chip" data-type="etype" data-val="Darkness">🌑 악</button>
+        <button class="r-chip" data-type="etype" data-val="Metal">⚙️ 강철</button>
+        <button class="r-chip" data-type="etype" data-val="Dragon">🐉 드래곤</button>
+        <button class="r-chip" data-type="etype" data-val="Fairy">✨ 페어리</button>
+        <button class="r-chip" data-type="etype" data-val="Colorless">⬜ 노말</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- 메인 탭 네비게이션 -->
+<nav class="main-nav" style="max-width:1400px;margin:0 auto;padding:0 2rem;">
+  <button class="main-nav-tab active" data-tab="search" onclick="switchTab('search')">🃏 카드 검색</button>
+  <button class="main-nav-tab" data-tab="events" onclick="switchTab('events')">📅 글로벌 행사</button>
+  <button class="main-nav-tab" data-tab="trending" onclick="switchTab('trending')">📈 인기 순위</button>
+</nav>
+
+<!-- ① 카드 검색 탭 (기존 main) -->
+<div class="tab-section active" id="tab-search">
+<main>
+  <div class="translate-banner" id="translateBanner">
+    <span class="tl-lang" id="tlLang">🇰🇷 한국어</span>
+    <span class="tl-orig" id="tlOrig"></span>
+    <span class="tl-arrow">→</span>
+    <span class="tl-eng" id="tlEng"></span>
+    <span style="color:var(--muted);font-size:12px">으로 검색했어요</span>
+    <button class="tl-close" onclick="hideTlBanner()">×</button>
+  </div>
+  <!-- 최근 본 카드 -->
+  <div class="recent-section" id="recentSection">
+    <div class="recent-header">
+      <span class="recent-title">🕐 최근 본 카드</span>
+      <button class="recent-clear" onclick="clearRecent()">전체 지우기</button>
+    </div>
+    <div class="recent-scroll" id="recentScroll"></div>
+  </div>
+
+  <div class="fav-mode-banner" id="favBanner">
+    ❤️ <strong>즐겨찾기 모드</strong> — 저장된 카드만 표시 중
+    <button class="fav-clear-btn" onclick="clearAllFavs()">전체 삭제</button>
+  </div>
+  <div class="stats-bar" id="statsBar" style="display:none">
+    <span>총 <strong id="totalCount">0</strong>장</span>
+    <div class="divider-v"></div>
+    <span id="pageInfo">1 / 1 페이지</span>
+    <div class="divider-v"></div>
+    <span>시세: <strong style="color:var(--gold)">TCGPlayer</strong></span>
+    <div class="divider-v" id="filterDivider" style="display:none"></div>
+    <span class="filter-active-badge" id="filterBadge" onclick="clearFilter()">
+      🎯 필터 적용 중 · 해제 ✕
+    </span>
+  </div>
+  <div class="status-msg" id="statusMsg">위에서 카드를 검색하거나 빠른 검색을 클릭해보세요</div>
+  <div class="grid" id="cardGrid"></div>
+  <div class="pagination" id="pagination"></div>
+</main>
+</div><!-- /tab-search -->
+
+<!-- ② 글로벌 행사 탭 -->
+<div class="tab-section" id="tab-events">
+<div class="events-wrap">
+  <div class="country-tabs">
+    <button class="ctab active" data-country="kr" onclick="switchCountry('kr')">🇰🇷 한국</button>
+    <button class="ctab" data-country="jp" onclick="switchCountry('jp')">🇯🇵 일본</button>
+    <button class="ctab" data-country="us" onclick="switchCountry('us')">🇺🇸 미국</button>
+  </div>
+
+  <!-- 한국 행사 -->
+  <div class="events-country active" id="events-kr">
+    <div class="events-grid">
+      <div class="event-card featured">
+        <div class="event-type et-world">🏆 월드 챔피언십</div>
+        <div class="event-title">2025 포켓몬 월드 챔피언십</div>
+        <div class="event-meta">
+          <span>📅 2025년 8월 14~17일</span>
+          <span>📍 미국 캘리포니아 애너하임</span>
+        </div>
+        <div class="event-desc">포켓몬 TCG·비디오 게임 통합 세계 최대 대회. 한국 대표팀 출전.</div>
+        <a class="event-link" href="https://www.pokemon.com/us/play-pokemon/worlds/2025/" target="_blank" rel="noopener">공식 사이트 ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-local">🇰🇷 지역 대회</div>
+        <div class="event-title">포켓몬 코리아 공식 대회</div>
+        <div class="event-meta">
+          <span>📅 연중 상시</span>
+          <span>📍 서울·부산·대구 등</span>
+        </div>
+        <div class="event-desc">포켓몬코리아 주관 공식 TCG 대회. 지역 예선부터 전국 대회까지 운영.</div>
+        <a class="event-link" href="https://www.pokemon.co.kr" target="_blank" rel="noopener">포켓몬코리아 ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-news">📦 신제품</div>
+        <div class="event-title">스칼렛 & 바이올렛 시리즈 최신 팩</div>
+        <div class="event-meta">
+          <span>📅 2025~2026</span>
+          <span>📍 전국 포켓몬 센터·서점</span>
+        </div>
+        <div class="event-desc">스칼렛 & 바이올렛 최신 확장팩 국내 순차 발매. 한국판 단독 아트 수록.</div>
+        <a class="event-link" href="https://www.pokemon.co.kr/game/tcg/news/" target="_blank" rel="noopener">국내 TCG 소식 ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-local">🏪 이벤트</div>
+        <div class="event-title">포켓몬 센터 코리아 행사</div>
+        <div class="event-meta">
+          <span>📅 상시 운영</span>
+          <span>📍 서울 (롯데월드몰 등)</span>
+        </div>
+        <div class="event-desc">포켓몬 센터 코리아에서 TCG 체험 행사·한정 굿즈 발매·스탬프 이벤트 진행.</div>
+        <a class="event-link" href="https://www.pokemoncenter.com/category/korean" target="_blank" rel="noopener">포켓몬 센터 ↗</a>
+      </div>
+    </div>
+    <div class="events-source-note">
+      <strong>📌 공식 소식 바로가기</strong>
+      <div class="official-links">
+        <a class="official-link" href="https://www.pokemon.co.kr" target="_blank" rel="noopener">🇰🇷 포켓몬코리아</a>
+        <a class="official-link" href="https://www.pokemon.co.kr/game/tcg/" target="_blank" rel="noopener">🃏 한국 TCG 공식</a>
+        <a class="official-link" href="https://cafe.naver.com/pokemonkorea" target="_blank" rel="noopener">📣 네이버 공식 카페</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일본 행사 -->
+  <div class="events-country" id="events-jp" style="display:none">
+    <div class="events-grid">
+      <div class="event-card featured">
+        <div class="event-type et-world">🏆 일본 챔피언십</div>
+        <div class="event-title">ポケモンジャパンチャンピオンシップス 2025</div>
+        <div class="event-meta">
+          <span>📅 2025년 7월</span>
+          <span>📍 도쿄 빅사이트</span>
+        </div>
+        <div class="event-desc">일본 전국 규모 공식 대회. 상위 입상자는 세계 대회 출전권 획득.</div>
+        <a class="event-link" href="https://www.pokemon.co.jp/event/pokemon_championship/" target="_blank" rel="noopener">공식 사이트 ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-intl">🌸 신제품</div>
+        <div class="event-title">スカーレット & バイオレット 최신 팩</div>
+        <div class="event-meta">
+          <span>📅 2025~2026</span>
+          <span>📍 전국 포켓몬 센터·量販店</span>
+        </div>
+        <div class="event-desc">일본 선행 발매 특전 카드 포함. 국내 미발매 카드 포함 가능성 높아 수집가 주목.</div>
+        <a class="event-link" href="https://www.pokemon-card.com/products/" target="_blank" rel="noopener">일본 TCG 신제품 ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-local">🏪 짐 배틀</div>
+        <div class="event-title">ポケモンカードゲーム ジム大会</div>
+        <div class="event-meta">
+          <span>📅 매주 전국 동시</span>
+          <span>📍 전국 참가 숍</span>
+        </div>
+        <div class="event-desc">전국 카드숍 주관 소규모 정규 대회. 상위 입상 시 프로모 카드 지급.</div>
+        <a class="event-link" href="https://www.pokemon-card.com/event/" target="_blank" rel="noopener">일본 대회 정보 ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-news">📰 메루카리 트렌드</div>
+        <div class="event-title">메루카리 포켓몬 카드 인기 순위</div>
+        <div class="event-meta">
+          <span>📅 실시간</span>
+          <span>📍 메루카리 JP</span>
+        </div>
+        <div class="event-desc">일본 최대 중고 거래 플랫폼 메루카리의 포켓몬 카드 실시간 거래 현황.</div>
+        <a class="event-link" href="https://jp.mercari.com/search/?keyword=ポケモンカード&order=desc&sort=created_time" target="_blank" rel="noopener">메루카리 ↗</a>
+      </div>
+    </div>
+    <div class="events-source-note">
+      <strong>📌 공식 소식 바로가기</strong>
+      <div class="official-links">
+        <a class="official-link" href="https://www.pokemon-card.com" target="_blank" rel="noopener">🇯🇵 포켓몬카드.com</a>
+        <a class="official-link" href="https://www.pokemon.co.jp/event/" target="_blank" rel="noopener">🎌 포켓몬 공식 이벤트</a>
+        <a class="official-link" href="https://www.pokemoncenter.jp" target="_blank" rel="noopener">🏪 포켓몬 센터 JP</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 미국 행사 -->
+  <div class="events-country" id="events-us" style="display:none">
+    <div class="events-grid">
+      <div class="event-card featured">
+        <div class="event-type et-world">🏆 World Championships</div>
+        <div class="event-title">2025 Pokémon World Championships</div>
+        <div class="event-meta">
+          <span>📅 Aug 14–17, 2025</span>
+          <span>📍 Anaheim Convention Center, CA</span>
+        </div>
+        <div class="event-desc">The biggest Pokémon TCG event of the year. Masters, Seniors, and Juniors divisions. $500K+ prize pool.</div>
+        <a class="event-link" href="https://www.pokemon.com/us/play-pokemon/worlds/2025/" target="_blank" rel="noopener">Official Site ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-intl">🌎 Regional</div>
+        <div class="event-title">2025–26 Regional Championships</div>
+        <div class="event-meta">
+          <span>📅 Sep 2025 – Apr 2026</span>
+          <span>📍 전미 각지</span>
+        </div>
+        <div class="event-desc">North America's Regional Championship circuit. High-stakes prize pools and Championship Points for Worlds qualification.</div>
+        <a class="event-link" href="https://www.pokemon.com/us/play-pokemon/championships/regionals/" target="_blank" rel="noopener">Regionals Info ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-news">📦 New Release</div>
+        <div class="event-title">Scarlet & Violet — Latest Expansion</div>
+        <div class="event-meta">
+          <span>📅 2025–2026</span>
+          <span>📍 LGS & Pokemon Center US</span>
+        </div>
+        <div class="event-desc">Latest S&V expansions with new Illustration Rare and Special Illustration Rare cards driving collector demand.</div>
+        <a class="event-link" href="https://www.pokemon.com/us/pokemon-tcg/pokemon-cards/" target="_blank" rel="noopener">TCG News ↗</a>
+      </div>
+      <div class="event-card">
+        <div class="event-type et-local">🃏 Local Play</div>
+        <div class="event-title">League Challenges & Cups</div>
+        <div class="event-meta">
+          <span>📅 매주 전국</span>
+          <span>📍 Local Game Stores</span>
+        </div>
+        <div class="event-desc">Weekly local tournaments at game stores across the US. Great entry point for earning Championship Points.</div>
+        <a class="event-link" href="https://www.pokemon.com/us/play-pokemon/where-to-play/" target="_blank" rel="noopener">Find Events ↗</a>
+      </div>
+    </div>
+    <div class="events-source-note">
+      <strong>📌 Official Sources</strong>
+      <div class="official-links">
+        <a class="official-link" href="https://www.pokemon.com/us/play-pokemon/" target="_blank" rel="noopener">🇺🇸 Play Pokémon</a>
+        <a class="official-link" href="https://www.tcgplayer.com/content/pokemon" target="_blank" rel="noopener">🛒 TCGPlayer News</a>
+        <a class="official-link" href="https://limitlesstcg.com" target="_blank" rel="noopener">📊 Limitless TCG</a>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /tab-events -->
+
+<!-- ③ 인기 순위 탭 -->
+<div class="tab-section" id="tab-trending">
+<div class="trending-wrap">
+  <div id="trendingContent">
+    <div class="trending-loading"><div class="spin">⚡</div><br>인기 카드 데이터 불러오는 중...</div>
+  </div>
+</div>
+</div><!-- /tab-trending -->
+<div class="about-page" id="aboutPage">
+  <div class="about-inner">
+    <button class="about-back" onclick="closeAbout()">← 돌아가기</button>
+
+    <div class="about-logo">PokéPrice</div>
+    <p class="about-tagline">
+      포켓몬 트레이딩 카드의 미국 실시간 시세를 한눈에 확인하세요.<br>
+      Pokémon TCG API와 TCGPlayer 데이터를 기반으로 운영됩니다.
+    </p>
+
+    <!-- 데이터 현황 -->
+    <div class="about-section">
+      <div class="about-section-title">📡 데이터 현황</div>
+      <div class="data-row">
+        <div class="data-dot"></div>
+        <span class="data-label">Pokémon TCG API</span>
+        <span class="data-val">실시간 연결 중</span>
+      </div>
+      <div class="data-row">
+        <div class="data-dot"></div>
+        <span class="data-label">TCGPlayer 시세</span>
+        <span class="data-val">실시간 연결 중</span>
+      </div>
+      <div class="data-row">
+        <div class="data-dot"></div>
+        <span class="data-label">포켓몬 이름 DB (한/일)</span>
+        <span class="data-val">1~9세대 1,025마리</span>
+      </div>
+      <div class="data-row">
+        <div class="data-dot off"></div>
+        <span class="data-label">한국 시세 (번개장터)</span>
+        <span class="data-val" style="color:var(--dim)">준비 중</span>
+      </div>
+      <div class="data-row">
+        <div class="data-dot off"></div>
+        <span class="data-label">일본 시세 (메루카리 JP)</span>
+        <span class="data-val" style="color:var(--dim)">준비 중</span>
+      </div>
+      <div class="data-row" style="border-color:rgba(240,180,41,0.2);background:rgba(240,180,41,0.04)">
+        <span style="font-size:14px">🕐</span>
+        <span class="data-label" style="font-size:12px">페이지 최종 접속</span>
+        <span class="data-val" id="aboutAccessTime" style="color:var(--gold)"></span>
+      </div>
+    </div>
+
+    <!-- 데이터 출처 -->
+    <div class="about-section">
+      <div class="about-section-title">🗂 데이터 출처</div>
+      <div class="about-card">
+        <div class="about-card-title">Pokémon TCG API</div>
+        <div class="about-card-desc">카드 이미지, 이름, 세트 정보, 희귀도 등 모든 카드 메타데이터를 제공합니다. 공식 TCG 데이터를 기반으로 운영되는 무료 API입니다.</div>
+        <a class="about-card-link" href="https://pokemontcg.io" target="_blank" rel="noopener">pokemontcg.io ↗</a>
+      </div>
+      <div class="about-card">
+        <div class="about-card-title">TCGPlayer</div>
+        <div class="about-card-desc">미국 최대 포켓몬 카드 거래 플랫폼. 시장가(Market Price), 최저가, 중간가, 최고가 데이터를 실시간으로 제공합니다.</div>
+        <a class="about-card-link" href="https://www.tcgplayer.com" target="_blank" rel="noopener">tcgplayer.com ↗</a>
+      </div>
+      <div class="about-card">
+        <div class="about-card-title">포켓몬 이름 데이터베이스</div>
+        <div class="about-card-desc">1~9세대 전 포켓몬 1,025마리의 한국어·일본어·영어 이름을 수록했습니다. npm <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:11px">pokemon</code> 공식 패키지 데이터를 기반으로 합니다.</div>
+      </div>
+    </div>
+
+    <!-- 기능 안내 -->
+    <div class="about-section">
+      <div class="about-section-title">✨ 주요 기능</div>
+      <div class="about-card">
+        <div class="about-card-desc" style="display:flex;flex-direction:column;gap:8px">
+          <span>🔍 <strong style="color:var(--text)">다국어 검색</strong> — 한국어·일본어·영어로 포켓몬 검색</span>
+          <span>📦 <strong style="color:var(--text)">세트별 필터</strong> — 시리즈 · 세트 단위로 탐색</span>
+          <span>💵 <strong style="color:var(--text)">가격대 필터</strong> — $10 이하 ~ $200 이상 프리셋 & 직접 입력</span>
+          <span>❤️ <strong style="color:var(--text)">즐겨찾기</strong> — 관심 카드 저장 (브라우저 로컬 저장)</span>
+          <span>🛒 <strong style="color:var(--text)">TCGPlayer 구매 연결</strong> — 카드별 구매 페이지 바로 이동</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 예정 기능 -->
+    <div class="about-section">
+      <div class="about-section-title">🚧 추가 예정</div>
+      <div class="about-card">
+        <div class="about-card-desc" style="display:flex;flex-direction:column;gap:8px;color:var(--dim)">
+          <span>🇰🇷 한국 시세 (번개장터) 연동</span>
+          <span>🇯🇵 일본 시세 (메루카리 JP) 연동</span>
+          <span>📈 카드별 가격 추이 그래프 (30일)</span>
+          <span>🔔 즐겨찾기 카드 가격 변동 알림</span>
+          <span>👤 회원 가입 · 로그인 (클라우드 동기화)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-footer">
+      PokéPrice는 Pokémon TCG API를 사용하며 Pokémon Company의 공인을 받지 않았습니다.<br>
+      Pokémon and Pokémon character names are trademarks of Nintendo.<br><br>
+      데이터 문의 · 오류 제보 · 제휴 문의는 언제든 환영합니다.
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleModalClick(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-inner">
+      <div class="modal-top">
+        <img id="mImg" class="modal-img" src="" alt="" />
+        <div class="modal-meta">
+          <div class="modal-name" id="mName"></div>
+          <div class="modal-set" id="mSet"></div>
+          <div class="modal-tags" id="mTags"></div>
+          <a id="mLink" class="modal-link" href="#" target="_blank" rel="noopener">
+            <span class="modal-link-icon">🛒</span> TCGPlayer에서 구매하기 →
+          </a>
+        </div>
+      </div>
+      <div class="price-section-title">💰 미국 TCGPlayer 시세 (USD)</div>
+      <div class="price-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>등급 / 타입</th>
+              <th>시장가</th>
+              <th>최저가</th>
+              <th>중간가</th>
+              <th>최고가</th>
+            </tr>
+          </thead>
+          <tbody id="mPriceBody"></tbody>
+        </table>
+      </div>
+      <div class="notice">
+        <strong>📌 데이터 안내</strong><br>
+        시세는 <strong>Pokémon TCG API</strong>를 통해 제공되며 TCGPlayer 거래 데이터를 기반으로 합니다.
+        실제 구매가는 판매자·상태·등급에 따라 다를 수 있습니다.
+        페이지 새로고침 시 최신 데이터를 불러옵니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Security Layer -->
+<script>
+(function(){
+  document.addEventListener('contextmenu',function(e){e.preventDefault();return false;});
+  document.addEventListener('keydown',function(e){
+    if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key.toUpperCase()))||(e.ctrlKey&&e.key.toUpperCase()==='U')||(e.ctrlKey&&e.key.toUpperCase()==='S')){e.preventDefault();e.stopPropagation();return false;}
+  },true);
+  var _d=false,_t=160;
+  function _c(){var w=window.outerWidth-window.innerWidth,h=window.outerHeight-window.innerHeight;
+    if(w>_t||h>_t){if(!_d){_d=true;document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0d0f14;flex-direction:column;gap:1rem;font-family:sans-serif;color:#7b8097"><div style="font-size:3rem">🔒</div><div style="font-size:1.2rem;color:#e8eaf0;font-weight:600">접근이 제한되었습니다</div><div style="font-size:13px">개발자 도구 사용이 감지되었습니다.<br>페이지를 새로고침하면 다시 이용할 수 있습니다.</div><button onclick="location.reload()" style="margin-top:1rem;padding:8px 20px;background:#f0b429;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:#1a1400">새로고침</button></div>';}}
+    else{_d=false;}}
+  setInterval(_c,1000);
+  document.addEventListener('selectstart',function(e){if(!['INPUT','TEXTAREA'].includes(e.target.tagName))e.preventDefault();});
+  document.addEventListener('dragstart',function(e){e.preventDefault();});
+})();
+</script>
+<script>
+function a0_0x34c8(){const _0x1fc2d7=['rhjVD3PLzq','iNrKlw1HCMS','DhKIpGOGica','qMfUzxr0zq','u2f3AW','rhjHy292Axm','CMnO','twLTzsbkCI4','phrYpJX0zca','Dg9UlwjVzhK','r2fYzgv2B2K','qxjJAgvVChm','Dc1IyxiTBwe','s2fYDgfUyq','q2HLC3bPBG','qMXPCgj1zW','wNLNyxjKzq','B3CIpGOGica','lM1HAw4TBMe','twvVD3n0Awm','u25VDMvY','zMLUza','DJ4kicaGica','DxKTyNrUiIa','ugv0AwXPBa','rxnJyxbL','rhvJA2XLDhq','tgvJAg9UAW','u3rLzwXPEa','txiUie1PBwu','pc90zd4kica','y2TNCM91BMq','sM9SDgLR','v2LUzW','u3bLy3rYAwu','vgLTyNvYCG','l3rKpJWVDhi','sxjVBIbnB3q','r3jPBw1ZBMe','tM9PyMf0','qxjHCxvHBMK','Chv0','txvZAgfYBMe','tNv6BgvHzG','tMLKB3jPBM8','vgLUA2f0B24','uMfNAw5Niei','icaGicaGpgq','u3bPzg9WCW','DMvUDhmTC28','rg9KDw8','q3jLC3nLBgK','u2LSDMfSBhK','t2rKAxnO','igfJDgL2zq','vgfWDsblB2S','l2rPDJ4','s2LUz2fTyMK','7j2867cyicHoB3jT','sM9SDgvVBG','y29UC3rYDwm','qwvYB2rHy3q','zs1Yyw5Nzsi','r29VBxK','u2vHzhjH','B2XVzM9PBa','yxK6BM9Uzsi','zMf2qMfUBMu','yxiOls1NCMu','q3LJBgL6yxi','C2XPy2u','Aw5JBhvKzxm','zsdSUBtRK5W','r3jLBMLUAMe','t3nOyxDVDhq','pGOGicaGica','AgLWCYaUCI0','r29ZC2LMBgu','DhjHBNnSyxq','vNvSCgL4','qM9UC2X5','u3bYAxr6zwu','iokaLdWVB3b0Aq','twfUyxbOEq','sgLWCg93zg8','uM9SEwnVBhK','vxjZywX1BMe','AM9PBG','u2TVCNvWAq','sgf1BNrLCG','wgvYBMvHCW','uhL1A3vTDwS','ug9YEwDVBJi','twv0yw5N','u2fUzhnOCMu','u3bPCML0B20','thLJyw5YB2m','uMH5Ag9YBG','rNjVC21VDgG','AwfUDa','twLUDw4','ugLRywnODq','tg9RAxG','tgL0DgvU','p3e9','y2HPCfTKyxq','icaGicaGica','txvR','Et0NzMXLEcC','q2HHBNnLEq','CMvSzwfZzuq','iIb0yxjNzxq','CMfYAxr5oIi','tMvJCM96Bwe','Axy+','7zsm65287yUW64ky','Dg9tDhjPBMC','CZ0IC2TLBgu','r29SAxnVCg8','zgf0yq','u3r1zMz1Ba','rMvUBMvRAw4','u2HLBgXKzxi','rgfYBwfUAxq','ug9PCg9Szq','twLLBMzVBW','qxj0Awn1BM8','vhjLzwnRBW','qMLIyxjLBa','lZ4kicaGica','r3vYzhvYCG','lwXLz2vUzci','qxjJAgfSDwq','C3bHBJ48l2q','icaGica8Aw0','rMfSAw5RCW','AxyGy2XHC3m','r2XVB20','q290Dg9Uzwu','vhLUyw1V','7zIe7j6Sifrdr1bS','u2vHA2LUzW','ugLRAxbLAW','qM9Szg9Yzq','s2fKywjYyq','64+z7zw07jQucIaGica','qwXVBw9TB2W','7jA07jQupc9OmZ4k','yMfJA2DYB3u','r3vSCgLU','zt0IDgv4Dc0','tMLKB3jHBUkzGa','ChjPy2uTyxm','DhLSzs5KAxm','r2fSBgfKzq','7jYepc9ZCgfUpG','vgfKyNvSyG','DMfSDwu','rwTHBNm','C3m9iNrKlwC','lJXICJ4kica','s2XPBMTSyw4','iokaLcdSI5ZSNQxQSiaG6RIW','ugLUzwnV','vgf0C3vNAxi','ugvJAgfYDw4','icaGica8Cca','r2fZDgX5','rMLKB3vNAa','qxjJyw5PBMu','7ysWioYxHUYDJdWVAdm','icaGpc9KAxy','rxnJyxzHBgK','u2vHBgvV','rhjLzg5HDW','r2LIBgu','yNv0Dg9Uigm','q3vMyw50','CMfYAxr5','uhvTCgTHyM8','zw0Iig9Uy2W','B24TAgvHzgK','twvSDgfU','BMCIpVcFJ4yG7j246RIW','sw5RyxK','B24+','7kAq6RkO7lc+6RIW66w8ioYGHoU2Ga','qMvSBg9ZC28','uMvNAwDPz2e','y29SB3i','twfNAwTHCNa','qw5VCML0Aa','zxzLBNrZlq','wMfUz29VC2u','vML2AwXSB24','rhjHDgLUAq','rhjPBgj1CG','u3vKB3DVB2q','icaGidXZDhi','u3vUA2vYBG','zgDL','tgL0BgvV','lwnOyw5Nzsa','rg9UCgHHBG','t3jIzwv0Bgu','rgL0Dg8','u2XPDgHLCIa','q3v0AwvMBhK','u2HLBgXVCW','u2fUzgLSzq','vMLJDgLUAq','ioYWVUYDHcdSIjGG7jEg7jA0','BwfYA2v0','uxvHEhDLBgW','qwjZB2W','C2v0iJ4','uxvHCxvHDMe','C3rYAw5NAwy','u2vYDMLUzq','rMXHChbSzq','8j+hSpcFH7CG7zwC6RwT7jA0','u3bVAw5R','y2vPBa','q2fZy29VBG','CMv0DxjUicG','u3DVB2jHDa','64UK7j2miokgKG','vg9YA29HBa','DMLKzxi','s2fUz2fZA2G','B2nRCW','v2vLzgXL','r29SzgvLBG','rMXVCMfNyxq','iJuIihn0EwW','vgHPzxz1Ba','pUUEGd88yNi+cG','rg91yMXHzgu','pJXKAxyGy2W','Es1IDg4','twfYzwvW','Bw9UDgnNlMK','wMvYyw9Yyq','u2LUAxn0y2G','sgvSAw9WDgK','BMuGC2HVCNq','tNvTzwW','q29WCgvYywO','Dg90ywXdB3u','tMf0Dq','7jIK6RIWioYlPo2mQdWVAa','q2fYDMfUAge','DgfIlq','jM9YzgvYqNK','r29SyMf0','sMLNz2X5Chu','vxjZyxjPBMC','wMvIC3rYAwS','7kca6RcaiokuGcdSI5ZSNQxQSia','C2f2zwrbDa','BgfZCZ0ICMe','ChjPy2vZ','ug9WCgXPBW','sxjVBIbdCM8','r3jPBwvY','icaGpgrPDIa','u2fUzgfJB24','u2n5DgHLCG','qMfZy3vSAw4','yxLLCIdRJBdSNBtTHla','BIi+8j+KJtWVzgK','iNrKlw1Pzci','DI10ywi','ChjPy2vnyxG','qMf4y2fSAwi','u29IyMXL','wMfYDwrL','u2fSyw5KAxq','v2vHDMLSzq','rgv3CgLKzxi','7jYeicHuq0DqBa','zgL2ignSyxm','65+S7jIK6RIWioYlPo2mQdWV','vgfUz2vSyq','v29YBwfKyw0','idXWpG','BgfJzwHVBgq','tMLUzxrHBgu','yw4+pc9KAxy','u3r1BMT5','q3jHyNjHD2W','mc4Znq','qxjTyxjVDwC','BgfIzwW','y29SC3bHBJ0','uhjPBwfYAw4','vg9YBMfKDxm','zgL2pGOGidW','imk3icm','r2XPBw1VCMe','ywjVDxrqywC','vg91y2fUBM8','s2XPBMS','u2LSAwnVyNi','l2rPDJ4kica','q2fSExjLEa','rhvYywX1zg8','r3j1yMjPBG','psiIxsK','tMLKB3jPBMe','twfNzwfYBMe','rwXLy3rPDMK','ywjSzq','wgf0Dq','B25NpVcFK4WG7iUK7iUC','Bg9JywXLq28','twfSyw1HCG','iNjHBMSTAxq','twLUy2nPBM8','wMfTyxPLBNq','qxjIB2XPDMe','yxjNzxq','u29Sz2fSzw8','uhvYCMXVAw4','7ksapc9KAxy+cG','Dg90ywW','u2HHCNbLzg8','C3r5Bgu','shLWBM8','uxvPBgXHzgK','tgfPCM9U','lxrVCdOXmNa','CMXHEq','vhLYyw50CNu','rMXVyxr6zwW','DgfYz2v0','Axy+cIaGica','BMvY','jNf1B3q7','DxjS','u2nVDMLSBge','q2XVExn0zxi','6RIW67o4ioYlNoUMRoYMIa','sxjVBIbuCMu','sw5JAw5LCM8','ugfYyxm','DhLWzunOAxa','jYKIpGOGica','ugLWBhvW','rMv6yw5KAxa','io2yHoYERcdQSidQSQKG67ku','r2fYy2HVBxa','thv4CMf5','ig9UzxjYB3i','s2XHBMC','tw90AgLT','uhjVyM9Wyxm','uNvUzxjPz3u','jMX0oW','ywXS','w2rHDgeTBwe','u2fTDxjVDhq','DhKTyMfKz2u','oMXPBMvHCI0','Bg9HzgLUzW','wNvIyxq','sgf4B3j1CW','pc9WpJWVzgK','DIbJBgfZCZ0','thv2zgLZyW','zurHDguMCge','l3n0CM9UzZ4','sw1WAwrPBxa','qMvSBhnWCM8','DhjPBq','u2HPzNrYEq','ywWP','qMfYCMfZA2u','B250lxnPEMu','C2v0','Bwf4','y2HHBMDL','rw50zxi','rhvKDw5ZCge','uM9HCMLUzYa','zgL2pGOGica','u2XHA290Aa','65oCioQYGoYdIEYCVoUHNcdSNBq','tgfTCgvUDa','iNrKlwHPz2G','mxn0ioYxKoUuLoYfMca','u2nVBgLWzwq','vg94zwW','C2vHCMnO','io2BHcdSTPtQSiaG7jIi7kcv','rxHLz2D1Dg8','qwLWB20','y2uTDMfSig4','twv3','66AS67ke7iQKio2zGoUHNcaO','CgfNAw5HDgK','ktWVC3bHBJ4','DgvZDa','lM5LEhrfBgu','B25LiJ7IGjq8lW','rMfYzMv0y2G','zMf2q291BNq','tgvKAwfU','u2nLChrPBgu','vgfPBgXVDW','rhjLzxb5','C3rHDhncyxi','ANnVBG','q2HHCMPHyNu','6RceioQXSoUEMoUFIsdSIjZSNiq','rhjHz29UAxq','sw5MzxjUyxa','C3m9iM92zxi','AgfYDc1Iyxi','u3LSDMvVBG','qw1VB25NDxm','twfYB3DHAW','yMXVy2S','vg9YDgvYCMe','twfZy2HPzMy','q2fJBMvH','lMn0ywjBzge','Cg9PBNrLCKu','lNrHyI1Zzwm','uMv2yxzYB28','v2fPBg9Yza','qMvLzhjPBgW','C29YDfnLBgu','yxnZpsjTB2q','r291z2LUzYa','DgnNCgXHEwu','iIaVpGOGica','u2H1ChbLDa','7j2mpc9ZCgfUpG','Aw5NlNn0EwW','uMLVBhu','ic5YlwnOAxa','vhvYDg9Uyxq','Dw5SAw1PDgu','twLUAw9Y','vgvYCMfRAw8','BMfTztOI','tMLKB2TPBMC','A2v5','rhDLyMjSzq','uhjPBNbSDxa','pc9ZCgfUpIa','uMH5zg9U','zwn0B3jbBgW','u2TPCgXVB20','CMnL','u2fSyxP6Bgu','u3DHBxbLCNq','vNvSBgfIEq','iNbYAwnLlxy','AgfYDc1YB3C','r29SDxjR','yNv0Dg9UpGO','zMf2vgfIqNq','tgLSBgLWDxa','DwXPCW','qw1IAxbVBq','Aw9U','s29TywXH','rg9SBgL2','A2vSzxrVBI0','v2vLCgLUyMu','vg90B2rPBgu','q29YDMLZCxu','rgv3z29UzW','rNvYCMv0','q3j5B2DVBMe','CZ0IC2vJDgK','CMvWBgfJzq','twvKAxrPDgu','uMfSDhm','CMvJzw50u2m','qxvKAw5V','rMXVzxr0zq','v2HPC211CG','7j6Limk3ia','BwfW','67Ai65+S7jIK64QuioYKKs4U','iJ7RS4dRJ5NTJ60G','rgvVEhLZ','q2f0zxjWAwu','vhLTCg9Szq','rhjHz2fSz2u','Cg9RzxbYAwm','q0DqBgf5zxi','r3jHDMvSzxi','vMvUAxbLzgu','B3b0Aw9U','tw9SDhjLCW','vhjHCgLUy2G','twfUzwn0CMK','7lk07jYH6RsaioYlNoUMRoYMIa','DMfYkc0TBxu','sxjVBIbwywW','qNjLBg9VBq','C3bHBIbJBge','icaGica8zgK','rxnWDxjY','s3jVB2TVzgK','uxvPBgf2yq','imk3io2dGoYEHtOG','zY1IyxiIihm','y2XHC3noyw0','q3jVyMf0','Dc5YzwXLyxm','rwXLy3rYB2q','r2XHBwvVDW','uxvHEgX5','u2LSy29VBG','uMfIB290','sgL0Bw9UDg8','C3r5Bgu9iMy','vhnHCMvLBMe','wMfJAwfU','vhjHBNf1AwW','v2f0y2HVzW','shvUDgfPBa','q2HHCM1HBMq','v2fPBg1LCG','venhugXHEwu','67o07is47jQupc9WpGO','vgLUA2f0Dwy','t2LUA29SB2C','sfruuca','ug9SAxDOAxi','sNLUEa','C3m9iNjHBMS','CZ0Iy2HHCNq','zgXL','sgvSAw9SAxm','q2v0B2rKBgu','ioUiJoUFRdXICJ7SPPa','r3jHBMj1BgW','u2fUzhLNyxm','rMfYAwDPCMe','tMLOAwXLz28','vMvUB25HDa','jNbHz2vtAxO','s2LUz2XLCG','rMXLDgnOBgK','vMfYB29T','ys12ywW9iIi','sg9UzwrNzq','t25PEa','yxrL','uhn5zhvJAW','ug9SAxrVzwq','yNjVD3nLu2u','u25VBq','shLKCMfWCgW','s2LUz2rYyq','zMLSDgvYrgK','z2v0rwXLBwu','u2nYywDNEq','B24TAw1NiJ4','zgvY','ugHHBNr1Bxa','CZ0Iy2fYzc0','u25VCNvUDa','DgLVBG','psjJAgfYDc0','BNrLCJTJB2W','vgfWDsbmzwW','idXZCgfUigm','q29UA2vSzhu','rMLUBMvVBG','twfNBMv0B24','C3rHDhvZlw0','vMLJDhjLzwi','r2XPC2nVCG','rwXNEwvT','q2XHBxbLCMW','rMLYzq','r29SzhvJAW','yNrUw2rHDge','C21HBgW','yNv0Dg9U','ywLS','twfNy2fYz28','rgvLCMXPBMC','q2XHEwrVBa','BwvZC2fNzq','r291CMDLAxm','q29YC29Syq','rhjHBxbH','C3rHDhvZ','uMLIB21Izwu','mIdSHjZRSOqG6RwS7lAvpa','r3jVB2TLEq','ywW9iIjDkq','q2HLD3rSzq','qNvUzwfYEq','cIaGpgrPDIa','s3L1CMvT','u3bPBMrH','t2TPzg9NAq','tgLLCgfYza','twfNBwfY','t2n0AwXSzxi','CgXHEt0NBM8','wNDLAwXVDxm','rgfYDw1HA2e','AY1Uyw1LiJ4','rhvZA25VAxi','rhjHA2XVywS','rw5HBw9YDxm','y2XHC3m9iNa','twfJAg9Rzq','ugf3Bw90','B25iB2XVzM8','wM9YB2fYAW','zsiGC3r5Bgu','lxnLDc5YzwW','zt0IzgLZCgW','qxjVBwf0Axm','u25LyxnSzxi','twvSBwv0ywW','sxz5C2f1CG','icaGicaGidW','txvUy2HSyxG','pc9KAxy+cIa','r2XHBgLL','zgf0yxnLDa','r2fYz2fUywm','thvYyw50Axm','r3jVDgXL','tgvHzMvVBG','u2LTAxbVDxi','C3vWzxj0Exa','tgLZDgvUzxi','psjYyw5RlwW','CNK9iG','DhLSzt0IyMe','7iQK7lM866cBicyG67cu7j20','u3rHCM1Pzq','ugf0CMf0','lwXPBMuIpJW','yxnZpsjJyxi','uMvNAwnL','vgH3ywnRzxK','r3jVD2XPDgG','pGOGicaGpc8','rw1IB2fY','DhjLBMrPBMC','qNjHBwjSzwC','tgvKEwjH','q2HHCMnHzgu','s2vJBgvVBG','qxjYB2T1zge','ioY5ToUtNcbut1aG','DgL0Bgu','DxjJzs1UB3q','tgLUB29Uzq','ug9Vy2H5zw4','ChjPy2vnAw4','rhvZDg94','u3DHBM5H','CxvLCNLtzwW','DhLWzxm6','ugfSB3nZyw4','lMv2zw50CY0','u2vLzg90','Aw1Hz2vZ','zgLZywjSzwq','zw4PlhzHCIG','u3bOzwfS','v29VCgvY','7j207jEq7jQulGOGica','vhjLDMvUyw4','mJC2nJiZBenyq21X','C3rVCfbYB3a','q2HPBMDSAw4','pUkaLcdSOitSSRqG7is47yQ4','uMf5CxvHEMe','Dej0BG','uM9JA3j1zMy','4OAqioYDToYGHa','uNvMzMXLDa','ugvYCNnLCMS','sxjVBIbmzwe','u3bYAwDHDgK','u2L6EMXPCgu','r3jVDwrVBG','psj0AgLZlNm','r2vUzxnLy3q','wwfTCgvY','zwqIpVcFM5iG6RwS66EK','s2LSB3DHDhq','u21VBgL2','ugLSB3n3Aw4','u2nHDhrLCMi','twfUDhLRzq','u2fUzhnSyxm','iNbYAwnLlwC','vgLYDg91z2e','tw9YzwX1BgW','tgf0Aw9Z','ugfSywzPBG','ugLKB3zL','qMvYz21PDgu','CNqIpG','ouzNAhP2EG','sgfWCgLUEq','rwXLA2LK','ywrK','s29TBw8TBW','qM9TyMLYzgK','mtu3mJCWueLgvfji','rxHJywrYAwW','sgL0Bw9UBgu','qMv3zwfY','q2XLzMfIBgu','rMvHCM93','rw50zwK','rgLWCgXPBG','C3m9iNjHCMK','tMfJBhn0ywm','kcGOlISPkYK','t21HC3rHCG','7zMa66gC7y+S7j28icHiBW','pGOGicaGpgq','sgvYywnYB3m','twfUzq','uMfWAwrHC2G','s3jPy2TLDg8','7iob7jYeioY5ToUtNoYyIoYALc4','qNvKzxC','oJeXChG7y28','qxzHBhvNzW','C2v0tMfTzq','ugX1C2XL','icaGica8l2q','tgL0D2LJAW','y2fYzeDYAwq','y29UC29Szq','8j+BKIdQTAZRP6qG66Eb7ygSia','yxj0lxjVDY0','pc9KAxy+','q2LUzgvYywm','rMXHySoPySoP','C2v0sw5MBW','66AT7zwy66M0io2vToUlUsdSUBq','iMnOyxj0lxq','ywXPz246y2u','AgLKzgvU','u2XVD2TPBMC','zxiIihn0EwW','zs1YB3CIpJW','y2uTCM93iJ4','v2fRzq','twLYywLKB24','CgfYC2u','twLTAwT5Dq','u3f1Axj0Bgu','ug9YEwDVBI0','twf3AwXL','rgfYA3jHAq','CMLJzsi+','C3m9iMvTChq','qMfZy3vSzwC','tMLKB3jHBUkzGG','t2jZDgfNB28','qMvHDxrPzMW','65+8pc9KAxy+cG','rg9KCMLV','rhvID29VBa','67oeioYlNoYeUcdSIQtTJPNTIRG','ywrH','iIbHCMLHlwW','ugLUC2LY','sg91BMrVB20','7jEq7isCioQ1RoUNPo2vMoQ4Sca','ugLKz2v5','q3jVy2fSB3i','zwn0B3i','qxjJDgLIyxG','v3LYzgvLCG','wMvRCM9T','ChjPy2uIpG','vgf1CM9Z','lNbYzxnLDc0','odG1mJy4AuXnBNbc','ywrKrxzLBNq','qNvPEMvS','mtKWnZG1q2TrqLnT','s2fIDxrVChm','B3b0z3jVDxa','Axn0','u2HPBNG','ywX0','uMvNAwrYywC','B2X0','yxnZpsjYyw4','ica8l2rPDJ4','u3r1BMzPC2S','qNvYBxK','C3jJ','rMX1DhrLCIa','wMLNEMfNB28','qwvNAxnSyxm','zMXLEa','rw1WB2XLB24','BM5LDa','sxjVBIbcB3u','lMnHCMqTyNu','uxDPBgzPC2G','y2XPy2S','sg91BMrVDxi','jtWVzgL2pG','u3DHzgXVB24','7z6i7iQK7yAG66ASioQ3UoUEMo2uHa','zZ5qAgfZzsa','qxjJAgvU','rgfYDhjPEa','q2HPBwvJAg8','ugLKz2vVDhq','sMfUz21Vlw8','q2XVyMjVChu','AxjL','qxjTywXKBW','y2fYza','CMvTB3zL','v2LNz2X5Dhu','u2HLzgLUAMe','Bgf5lxrLEhq','C3rHCNrZv2K','zMf2B3jPDgu','uMvNAxjVy2S','uM9VA2LKzwu','66Y07kcC7zwCio2zGoUHNo2pRoYDVa','B29Wzw5LCIi','vMLSzxbSDw0','iMnHCMqTC2u','CZ0IzMf2lwu','u25VCMXHEa','twLSB3rPyW','v2HPBxnPy28','qw1HDxjH','twfNBw9YDge','yM9KEq','tMfNyw5Hzgu','twvZChjPDa','Dw5ZAgLMDa','DMfYkc0TC3u','rgLNBgv0Da','r29Szxr0','rwLZy3vL','sMvSBgLJzw4','s3jVA29YB2S','qMXHEMLRzw4','r2fYyM9KB3i','iNrKlwXVDYi','txvKyNjHEq','AxrP','v2HPCMXPCgu','vM9Sy2fYB24','qNv6ENDVBgu','BvnLDa','DgfIBgu','ugf3BMLHCMq','CM5Z','q2HHDg90','u3bLyxjVDW','CMfYAxr5q2G','jsi+pc9KAxy','Dgv4DenVBNq','vgLUzY1mDq','tMLJA2L0','Axn0iJ4','q2XHD2L0EMu','q3j1C3rSzq','vg9NzxrPyW','zgLZCgXHEq','rwvSzwT0CMK','Bg93','wwfTyxnR','tM9JDg93Ba','cIaGica8l2q','u2nVCMj1BM4','C2v0lMLKoG','sg8Tt2G','yxbPlNbVA2u','BwLK','sg9WCgLW','q2HPlvL1','i3jHCML0Eum','uxvHz3nPCMu','uMvNAxn0zwu','vg94AwnYB2e','sw5KzwvKzwu','u25LyxnLBa','whvYA2L0CMu','wwfUBwvNyq','vg9NzxbP','vg94DhjPy2K','shLKCMvPz28','BM93','vhj1yMjPC2G','qM9SDhvUza','u21LyxjNBgu','C2LNBMfS','yxnZpsjZA2u','qxbWBgv0Dw4','q29UDgvUDa','q2fTzxj1Chq','Aw1Hz2u','BIi+4PQG77Ippc9KAq','AwXSEq','vgvWAwC','twfNBMvTAxq','zZ0IBgf6Esi','rgHLBg1PC2u','v2LNBgv0Da','vxHPzq','C29YDa','u2nYywz0Eq','v2f0DhjLBa','v3vNDhjPBW','z2v0sg91CNm','7lM065oC6RcaioYxHUYkTEUlIoUlPa','rMvYCM90Ag8','C2vYAwvZ','twvNyw5PDw0','v2LTCg9K','qxbWBgLU','twLLBNnOyw8','DhLWzxm','qMvSzhvT','q2fJDhvYBMu','tgfUDhvYBG','r2fSDMfUDhu','BgfZCZ0IC2u','rMXPDhrSzq','v29VyMf0','DgXpCMLN','u2LNAwX5CgG','q2HPBwnOyxi','u2f3C2j1y2S','lMnHCMq','q2HLCNjPBq','lwzVB3rLCIi','s3jPy2TLDhu','qxjJDg92Axm','ChjVDg90Exa','ic8G','vgLUA2f0Aw4','rxHWBg91za','ioY1NoYGGh7STzZQS6aG67ku','DI1IDg4','z2v0rgf0zq','Bxb0Esi+cIa','vMLNB3jVDgG','BgfYz0LTywC','AwnRpsjVCgu','y2XHC3m9iNm','u2LTAxnHz2u','q2fYCMfJB3m','AgfZDa','B3b0Aw9Uw3y','vg9YCMfJyxq','vgfUzgvTyxu','qMXPDhPSzq','BvbYAwnLqM8','zgvSzxrL','u25PDNK','Ag9SB2zVAwW','zMLSDgvY','sgf3BhvJAge','q2HHCM1LBgu','B3bLBG','t3jPy29YAw8','BgfZCZ0ICMu','vgvUDgfJCNu','rhvYyw50','Bxb0Es1Py28','rxHLz2DJDxq','rNjVz2fKAwu','mKnPuLnJuq','y29TCg9ZAxq','u2fSyw1LBMm','rhjHCgLVBG','r29NB2f0','rNjPz2LIyxG','C21VB3rO','CMvJzw50lwm','E30Uy29UC3q','lwLJB24IpVcFG48','tMLKB3f1zwu','qxjVBG','ugfUz29YBW','icaGicaGphq','BwvUDfnPyMW','rgLHBMnPzq','CNqTC2vJDgK','t3rOzxi','CMvTB3zLsxq','q3jHBMLKB3m','twfJAgfTCa','sg9SBYK','rw1VBgDH','DMvUDhm','q29TyMvL','rhjPzMXVB24','q2HLCNvIAq','AgLZiIKOicK','z3jPzci+cIa','rgv3B3r0','pc9ZCgfUpGO','CMvS','yxnZpsjJAge','vg9LzhnJCNu','u2X1CNb1zMy','zw50CMLLCW','q3vIB25L','sgvYzgLLCG','AwXK','qMXPC3nLEq','qMvSBgLIB2W','C2v0sxrLBq','ug9YEwDVBG','ugfUCg91CG','kYKRja','rMX5z29U','twv0ywDYB3m','qNjHDMLHCNK','r3jHChbSB2m','CMTLDciGC3q','txvUA2LKB3i','qMLZAgfYCa','r3vTC2HVB3m','u3rVDxrSyw4','zxqIpG','C2HVDW','ps1YzwXLyxm','u2LTAxnLyxi','qxjJDg96B2W','r2XHC3rYAwu','twfRDwHPDge','qwX0yxjPyq','u2vPC21PDg8','tMLUy2fKyq','vgHYB2G','zurHDgu','tgLJA2L0Dw4','pc90zd4','AhjLzG','uMfTCgfYzg8','t21HBNL0zq','rNjPBgXPC2G','B3i6DMfYkc0','q2vUDgLZA28','vMLYAxPPB24','vgH1BMr1CNu','vhvYDhDPzW','rgvPBM8','r2LYywzHCMK','yxLLCIdQUldSPiaP','s2fYCMfIBge','ugvSAxbWzxi','jtT3Awr0AdO','u3DHyMX1','qxP1CMLSBa','qw1WAgfYB3m','CdOXmhb4iJ4','Dg9WmW','ywDHDgLVBG','s29YywLKB24','q2XLzMfPCNK','u3DPCMXPEa','rMvLyMfZ','twfYywn0Dxm','sgvHDhjHBG','vgfSB25MBge','y3rPB24TAgu','rwXLy3rHyNu','qNvSyMfZyxu','r2XHy2vVBG','txiUifjPBwu','twvSB2v0Dge','AxbBzgf0ys0','icaGphnWyw4','D2fYBG','ugfYyxnLy3q','tgfUzg9YDxm','idXKAxyGy2W','ls1KAw0Po20','zujHBM5LCG','s3LVz3jL','7jQupc9OmZ4kia','zxHJzxb0Aw8','pgeGy2XHC3m','qxjJzxvZ','s29MzMLUzW','ugvYC2LHBG','yxnZpsjIDg4','cIaGicaGidW','y2HPCdPUB3q','Dc1ZDwiIpUY1Na','vgvKzgL1CNm','txvUBMe','u2HLBg1LDa','C3m9iNbYAwm','ugf3BwK','r3jLzwrLBNq','rMvYywXPz2e','icaGicaGpc8','r3jVDNLSzq','rwXLy3rYAwS','v2fYDg9YDgW','rxnWyxrOCMe','u3DHBg90','C3m9iMnOyxi','u2T3B3zLDa','rgLNz2vYC2i','thvTAw5LB24','qMfYyM9Hy2G','r3v6EMXVCMq','ywn0AxzL','uMvSBg9Y','u3bPBMfYywS','q29HBg9ZC2e','r290Ag9YAxq','qwjVBwfZBM8','rwv2zwu','7jQ47iUK67ke','BgLUzsi+pc8','vw5MzxPHBNq','lwjNiJ4kica','r2LYyxrPBMe','txvKA2LW','iIbSB2fKAw4','ih4G','tw9Yz3jLBq','qwXHA2f6yw0','vw5VD24','twfNBMv6B24','r2LTBwLNAg8','wM9YDwe','qxjPywrVCW','y291BNrYEq','tgf0AwfZ','v28Tq2HPzw4','twv3DhDV','lMn0ywi','z2v0twLUDxq','rgvKzw5Uzq','AgLKzu5Vuhi','sxjVBIbcDw4','yxnZpsjLBxa','rwXKzwDVC3m','ug9UExrH','y2XVC2vZDa','t3j0AhDVCM0','A2v5zg93BG','u3rHBNrSzxi','r2vUz2fY','Aw5MBW','DMvZ','s2XLzMTP','BgvUz3rO','r29Yzwj5C3m','tMfJBgK','u2XHA2LUzW','uM9ZzwXPyq','u2HPAw5VDgK','q3jHzgLSEq','r290AgL0yq','rgfJAhnIDw4','rg90DgXLCG','Dg9gAxHLza','BNrcEuLK','v2LUz3vSBa','icaGicaGia','vhLWAgXVC2K','q2fZDgzVCM0','q2fYyMLUAW','sxjVBIbiyw4','qxP1BwfYAwW','ChmGlNiTy2G','sg91BMrZDg8','BMfTztO','vMfWB3jLB24','zgf0ys12ywW','ugLUy3vYy2G','sg9VDgHVB3q','uMvTB3jHAwq','twvVD3rO','u3rHCMf2Awe','q2HPA29YAxq','rMXHCMvVBG','uM93Bgv0','u3rHCMfWDg8','psjFyMXHBMS','s2XHD2y','Eci+cIaGica','thvUywXH','qMXHy2vWAge','u3vUzMXVCMe','DMfSpsiIxq','rwvSzwT0CM8','ioUWNoYdNtWVAdm+','BgrLCG','v3LUyxv0','twLZBwfNAxu','rhjPzMjSAw0','vg9Yy2HPyW','u3rHCNL1','C2nYB2XSvg8','y2HLy2TLza','u2fIBgv5zq','s2fRDw5H','CgfNzuLUzM8','cIaGicaGia','lw1PBJ0IiL0','Bg9N','swXSDw1PC2u','ica8zgL2igm','twfUzgLIDxO','BM9Uzq','thvNAwe','rM9VBMD1CW','ugLNBML0zq','BNvTyMvY','rMXHBwLNBW','q3jHBw9Yyw4','BgfZCZ0IzMe','DMfSDwvZ','u3bLD3bH','zv9YzwnLBNq','wwfUBwe','ug9SAxDHzW','i3r5CgvdAgK','psjJyxjKlwi','u3rHCMX5','qNjHBwjSAw4','sxjVBIbuAg8','qMLKB29M','7lc+6RIWio2gOoQ4Gci+cG','thvUyxrVBMu','vhjVCgL1CW','tw9UzMvYBM8','pgLTzYbZCMm','rhvNDhjPBW','BIi+8j+dJZWVzgK','qNv0DgvYzNi','qwjYyq','BY92mI9Jyxi','rhjPENPPBgu','rNjVC2XHC3m','rhvZy2XVChm','psjPBwCTB3y','v29IyNvMzMu','v2vLEMLUzW','wxvUz29VCW','u2vUDhjLDa','mtaYmtu2oezVuNbmyW','vMvUDxnHDxi','qMfYyMfYywm','icaGpgGZpUYMKa','kcKG','CNvJDg9Ykci','uMfPy2H1','r29VzhjH','vgfWDsbcDwW','6Rcake1HCMTLDa','AxbZ','u2TPDhr5','qMXHC3rVAxm','qwnJzwXNB3i','DI10ywjBzge','vhj1BwjLywS','qxvYB3j1CW','Dg9UiJ4kica','y2XHC3m9iMm','icaG','cIaGica8zgK','q3vYC29Syq','vgvUDgfJB28','zM9YrwfJAa','u2v3ywrKBgu','tg90ywq','ioQ4SoYKGcdSI5ZSNQxQSiaG','pgrPDIbJBge','q3jHyM9TAw4','AwnL','rhjHz29UywK','zc1IB2r5iJ4','q2vYDwXLzgC','vM9Sy2fUAw8','vw1ICMvVBG','ugfSCgL0B2e','nxjLBsi+7j20ia','BMfTzsiGDgK','uhvWAxrHCG','r29Szw0','7iAm65oCicyG7iUK65oC','z3jHzgLLBNq','sgvHDg1VCG','q29YCgHPC2G','icaGidXZCge','vgfUz3jVD3q','rNvYzNjVDq','z2v0tw9UDgG','zwfY','sg9YC2vH','u2v2AxbLCG','AwnVBIi+8j+BKJW','u3rLzw5Lzq','kfTKyxrHlxy','r2fZDhjVzg8','uM90B20','y3jLyxrLrwW','rNjVywTPzq','Ed0IiL0','Ahr0Chm6lY8','CMvJzw50u2u','ugfSA2LH','vgfWDsbgAw4','sg9VCge','yxnZpsjWCMK','vgvYyxbHz28','vMfUAwXSAxq','zxjSyxKIpJW','rgvSCgHVEa','q2HPzw4Tuge','q2fYA29S','vMLRyxzVBhq','qNjVBNPVBMC','psjTyxjNAw4','q3jVywD1BMS','q3jVy29UyxC','q2v0AxrHBG','q2HLC25HDwC','tgLSBgLNyw4','iNnRzwXLDg8','s3vIzNu','u2XPz2DVBW','r2XPz2fY','pha+7lM065oCioQYGoYdIq','u21VB2nODw0','twfUA2v5','ug9SAxDYyxq','q3jHD2rHDw4','qM91BNn3zwu','zc1Uyw1LiJ4','q29ZBw9LBq','twfYzwfUAwu','tg9WDw5UEq','rhvZA3vSBa','rMvYCM9Zzwu','DJ48Adm+67Ai65+S','vgfYB3vUDhu','ywWTBgLUAY0','qMfNB24','sgL0Bw9Uy2G','qMLUywnSzq','twLNAhr5zw4','thv4Aw8','B3zLCMzSB3C','rMLUAxPLBG','rhjHz2fWDwW','tgfWCMfZ','C2vHCMnOsw4','r290AgL0zwW','q2LUy2nPBM8','zgL2pG','zxjcEt0TC2u','lwrPBsK7Cge','Esi+pgrPDIa','rhj1zgrPz28','qwDNCM9U','yxbWzw5Kq2G','Bw9KywXpDMu','nLn6ueP3Bq','thvKAwnVBg8','ugLKz2vVDa','sxjVBIbkDwC','rg9Uzg96BW','uMH5CgvYAw8','vMfUAwXSDxG','B25JBgLJAW','zw50','CgfNzs1IDg4','tw9YCgvRBW','DJ48Adm+7jIK66wy','uMvNAwvSzwS','twfZCxvLCMe','ug9SDgnOywC','twfYC2HHzg8','A2v5CW','z2v0','qMvOzwv5zw0','q2XLzMzH','rMXHywzMEq','tgLJA2LSAwm','txvYA3jVDW','BwLU','qNj1DguGqM8','BM9YBwfS','BvrHz3m','uhLYB2fY','v3vYBxbSzq','Dg9Y','tgLSzwvW','Aw1NihnYyZ0','v29VBg9V','AxrSzsi+7lM065oC','qw5UAwHPBge','7zwy7yQ46RoO65oCicyG7iAm','tgfYDMvZDge','qxHLDW','iIbYzwW9iM4','r2vVzhvKzq','yNrU','tgvHDMfUBNK','C2v0u2vSzwm','sgf0DgvYzw4','q29TzMv5','B3bHy2L0Eq','twv0yxbVza','z0nHCMqOjW','vMvSDxPH','zgL2','qNj1EgLZAa','s2XLyxzVCG','tMLUAMfZAW','q2fWC2fRAwq','qxPLBgy','u2HHEw1PBG','CZ0ICMfUAY0','ywrPBMCIpVcFK4O','io2BHcdINAtVUi8G67ke7yQ87j2e','vMLICMf2yq','DgvKkq','ntyXotuZsurSu0nJ','yw5Rlw51Bsa','ChjPy2uTzgu','r3jLyxzHCMq','uMf0AwnHDgu','uhvYDwDSEq','mZ48Cd4','twfJAg9W','CMv2zxjZzuG','q3vIy2HVBW','tg9TyNjL','tM9ZzxbHC3m','B24IpGOGica','imk3io2DRoQ3GoUpHdOG','swDNBhLIDwy','t2DLCNbVBG','ugHHBNb5','txvKC2rHBgu','tgfYDML0yxi','yxv0BW','rgvSy2f0DhK','BMfTzq','twf1C2HVBgq','u2HYB29KBgu','B25oB3jTywW','AgLNAa','twvVD3nJyxi','lwLJB24IpVcFM5i','ugLJAhu','u251yMj1BgW','u3vPy3vUzq','u2nPEM9Y','q3LUzgfXDwK','uMfPA291','phnWyw4Gy2W','u2XVD3bVA2u','Aw9UC3rHCNq','iJ48l2rPDJ4','zcbJBgfZCZ0','pUYlNoYeUcdSOjxRS7qG7jEg','C2L6zq','Bg9YoNzHCIG','rMXLDgnOAw4','C3bHBJ4','BMfTzsi+','ugfZC2LTAwe','u2X1z21H','BLrYzw5KAw4','u2fUzhKGu2G','7lM065oC7j2yioYlNoYeUcdSOju','zgrPBMC6ms4','y2XHC3m9iMu','u3DLBgXVDW','iIbHBhq9iG','q2vSzwjP','DgnNvxjS','r3jLyxqGvhu','vhLYB2D1zq','vxjZAgLMDq','u2nYzwfTifq','q29YDMLRBMK','qNjVBNPVCG','v2LZAgL3yxm','vg94yxbLEa','vhLYDw50','cIaGicaGica','DJ48Adm+642W7j20','ChvZAa','mxn0rwrPDgK','ugf3Bw8','rNjHEhvYzq','s3jHyMj5','ugfUC2fNzq','imk3ioYeUo2kUdOG','D2rH','t3jHBMD1CNu','67Iu656zicyG7zMu7j207yQ4','q2HHCML6yxi','sgf0DhjLBq','Dg9Nz2XL','uM9ZzxjHzgu','u2TPzgrV','vg9NzwTPC3m','uMf0Dgf0yq','r3j1BxbPzW','z2v0sxrLBq','x19WCM90B18','BuLTzW','icaGpgrPDJ4','qNvUBMvSyNK','sgLWCg9WB3q','tNLTyMXL','u2LUAxn0zwe','rMXVCMDLCW','CMv0DxjUihq','zxnZvgLTzq','r3LHCMfKB3m','u3rHA2f0ywS','u2vLBa','u2HYB29TAxm','r2HVBgrLBMC','q2HHBMrLBhu','u2XVD2jYBW','vMvZCgLXDwu','u2HPzwXKB24','sMLYywnOAq','CZ0Izw1WDhK','wxzLBhrHBa','pJWVzgL2pG','u2T1BNrHBMS','u2H1y2TSzq','vhLWztOGtNu','zw1LBNq','twfTB3n3Aw4','zYiGC3jJpsi','thvJyxjPBW','rgvSAwjPCMq','uhjPBwvHCgu','iJ4kicaGica','rhvUC3bHCMm','CNqTCM93lxa','DMfSDwu9iIi','sNvTCgX1zMy','v2HPC2nHC2G','BJ48zgL2igm','DhjHy2u','imk3ia','twfIB3nZDgK','ugfUC2vHCG','yMfYlxjHBMC','r3jHzMfPywK','qMf5BgvLzG','qMfZDgLVzg8','C2v0qMfKz2u','twfYAwXS','BxbHCMu','r2LNywXPDgG','y2XHC3nmAxm','8j+hR/cFH7uG7j2867o47jA0','vg9NzwrLBwe','u3rVBMPVDxi','yMLUza','u2TLBgvKAxi','ioUNGE2bRcdSL4BSNyW8lW','z2H0','sgfRyw1Vlw8','q29IywXPB24','ugfUy2HHBq','vhLYyw5PDge','ywX1zt0I','nJK1nJC5ueHuvwHr','rgvJAwr1zxK','Aw5Uzxjive0','s2LYBgLH','vMvUB21VDgG'];a0_0x34c8=function(){return _0x1fc2d7;};return a0_0x34c8();}const a0_0xfae5a6=a0_0x2c53;(function(_0x3d5662,_0x285225){const _0x22487d=a0_0x2c53,_0x4ed4a6=_0x3d5662();while(!![]){try{const _0xc0bb78=-parseInt(_0x22487d(0x2cd))/0x1+parseInt(_0x22487d(0x401))/0x2*(parseInt(_0x22487d(0x660))/0x3)+parseInt(_0x22487d(0x33d))/0x4+parseInt(_0x22487d(0x340))/0x5*(-parseInt(_0x22487d(0x58d))/0x6)+-parseInt(_0x22487d(0x5ca))/0x7+parseInt(_0x22487d(0x517))/0x8+parseInt(_0x22487d(0x2ed))/0x9*(-parseInt(_0x22487d(0x2f3))/0xa);if(_0xc0bb78===_0x285225)break;else _0x4ed4a6['push'](_0x4ed4a6['shift']());}catch(_0x9b4b96){_0x4ed4a6['push'](_0x4ed4a6['shift']());}}}(a0_0x34c8,0x29888));const a0_0x1cf715=(function(){let _0x3aa9a2=!![];return function(_0x34ff06,_0x154f73){const _0x522dc5=_0x3aa9a2?function(){if(_0x154f73){const _0x12204d=_0x154f73['apply'](_0x34ff06,arguments);return _0x154f73=null,_0x12204d;}}:function(){};return _0x3aa9a2=![],_0x522dc5;};}()),a0_0x26dbf4=a0_0x1cf715(this,function(){const _0x4c4656=a0_0x2c53;return a0_0x26dbf4['toString']()[_0x4c4656(0x1af)](_0x4c4656(0x2fd)+_0x4c4656(0x42d))[_0x4c4656(0x6d9)]()[_0x4c4656(0x6a1)+_0x4c4656(0x5aa)](a0_0x26dbf4)['search'](_0x4c4656(0x2fd)+_0x4c4656(0x42d));});a0_0x26dbf4();const a0_0x5dab95=(function(){let _0x1c2d15=!![];return function(_0x337e23,_0x19c7dd){const _0x550de7=_0x1c2d15?function(){if(_0x19c7dd){const _0x2ed393=_0x19c7dd['apply'](_0x337e23,arguments);return _0x19c7dd=null,_0x2ed393;}}:function(){};return _0x1c2d15=![],_0x550de7;};}()),a0_0x3d3050=a0_0x5dab95(this,function(){const _0x1fffc0=a0_0x2c53;let _0x5d12af;try{const _0x5ae5e1=Function(_0x1fffc0(0x106)+'function'+_0x1fffc0(0x51b)+(_0x1fffc0(0x409)+_0x1fffc0(0x51c)+_0x1fffc0(0x628)+_0x1fffc0(0x41c))+');');_0x5d12af=_0x5ae5e1();}catch(_0x218ddc){_0x5d12af=window;}const _0xf336b1=_0x5d12af[_0x1fffc0(0x30e)]=_0x5d12af['console']||{},_0x2e3595=[_0x1fffc0(0x4ee),_0x1fffc0(0x469),_0x1fffc0(0x4b4),'error',_0x1fffc0(0x471)+'n',_0x1fffc0(0x38a),_0x1fffc0(0x647)];for(let _0x5ef316=0x0;_0x5ef316<_0x2e3595[_0x1fffc0(0x4b7)];_0x5ef316++){const _0x30d640=a0_0x5dab95[_0x1fffc0(0x6a1)+'tor'][_0x1fffc0(0x3df)+'e'][_0x1fffc0(0x657)](a0_0x5dab95),_0x951822=_0x2e3595[_0x5ef316],_0x2a59a6=_0xf336b1[_0x951822]||_0x30d640;_0x30d640[_0x1fffc0(0x620)+'_']=a0_0x5dab95['bind'](a0_0x5dab95),_0x30d640[_0x1fffc0(0x6d9)]=_0x2a59a6[_0x1fffc0(0x6d9)][_0x1fffc0(0x657)](_0x2a59a6),_0xf336b1[_0x951822]=_0x30d640;}});a0_0x3d3050();function a0_0x2c53(_0x111aaa,_0x40bee8){_0x111aaa=_0x111aaa-0xb7;const _0x3ac00d=a0_0x34c8();let _0x3d3050=_0x3ac00d[_0x111aaa];if(a0_0x2c53['JExqfh']===undefined){var _0x5dab95=function(_0x1cf715){const _0x34c803='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=';let _0x2c53ff='',_0x2b649b='',_0x42026a=_0x2c53ff+_0x5dab95,_0x22aea9=(''+function(){return 0x0;})['indexOf']('\x0a')!==-0x1;for(let _0x1c12e9=0x0,_0x64db33,_0x123d7b,_0x3aa9a2=0x0;_0x123d7b=_0x1cf715['charAt'](_0x3aa9a2++);~_0x123d7b&&(_0x64db33=_0x1c12e9%0x4?_0x64db33*0x40+_0x123d7b:_0x123d7b,_0x1c12e9++%0x4)?_0x2c53ff+=_0x22aea9||_0x42026a['charCodeAt'](_0x3aa9a2+0xa)-0xa!==0x0?String['fromCharCode'](0xff&_0x64db33>>(-0x2*_0x1c12e9&0x6)):_0x1c12e9:0x0){_0x123d7b=_0x34c803['indexOf'](_0x123d7b);}for(let _0x34ff06=0x0,_0x154f73=_0x2c53ff['length'];_0x34ff06<_0x154f73;_0x34ff06++){_0x2b649b+='%'+('00'+_0x2c53ff['charCodeAt'](_0x34ff06)['toString'](0x10))['slice'](-0x2);}return decodeURIComponent(_0x2b649b);};a0_0x2c53['gImRcQ']=_0x5dab95,a0_0x2c53['nnPbLu']={},a0_0x2c53['JExqfh']=!![];}const _0x8bcb8b=_0x3ac00d[0x0],_0x3b39f5=_0x111aaa+_0x8bcb8b,_0x26dbf4=a0_0x2c53['nnPbLu'][_0x3b39f5];if(!_0x26dbf4){const _0x522dc5=function(_0x12204d){this['eDmHeN']=_0x12204d,this['slLtpV']=[0x1,0x0,0x0],this['YXprZC']=function(){return'newState';},this['EhGbZM']='\x5cw+\x20*\x5c(\x5c)\x20*{\x5cw+\x20*',this['NebTNQ']='[\x27|\x22].+[\x27|\x22];?\x20*}';};_0x522dc5['prototype']['uiRQkk']=function(){const _0x1c2d15=new RegExp(this['EhGbZM']+this['NebTNQ']),_0x337e23=_0x1c2d15['test'](this['YXprZC']['toString']())?--this['slLtpV'][0x1]:--this['slLtpV'][0x0];return this['pexmqg'](_0x337e23);},_0x522dc5['prototype']['pexmqg']=function(_0x19c7dd){if(!Boolean(~_0x19c7dd))return _0x19c7dd;return this['ZeKlaV'](this['eDmHeN']);},_0x522dc5['prototype']['ZeKlaV']=function(_0x550de7){for(let _0x2ed393=0x0,_0x5d12af=this['slLtpV']['length'];_0x2ed393<_0x5d12af;_0x2ed393++){this['slLtpV']['push'](Math['round'](Math['random']())),_0x5d12af=this['slLtpV']['length'];}return _0x550de7(this['slLtpV'][0x0]);},(''+function(){return 0x0;})['indexOf']('\x0a')===-0x1&&new _0x522dc5(a0_0x2c53)['uiRQkk'](),_0x3d3050=a0_0x2c53['gImRcQ'](_0x3d3050),a0_0x2c53['nnPbLu'][_0x3b39f5]=_0x3d3050;}else _0x3d3050=_0x26dbf4;return _0x3d3050;}const API=a0_0xfae5a6(0x552)+a0_0xfae5a6(0x3a1)+'montcg.i'+a0_0xfae5a6(0x50e)+'ds',PAGE_SIZE=0x14,_cache=new Map(),CACHE_TTL=0x5*0x3c*0x3e8;function getCached(_0x464d11){const _0x1f0dee=a0_0xfae5a6,_0x21ad63=_cache[_0x1f0dee(0x59e)](_0x464d11);if(!_0x21ad63)return null;if(Date[_0x1f0dee(0x3b0)]()-_0x21ad63['ts']>CACHE_TTL)return _cache[_0x1f0dee(0x3f3)](_0x464d11),null;return _0x21ad63[_0x1f0dee(0x6dc)];}function setCache(_0x41dd76,_0x2ac501){const _0x390311=a0_0xfae5a6;if(_cache[_0x390311(0x5f2)]>=0x1e){const _0x5e6426=_cache[_0x390311(0x59d)]()['next']()[_0x390311(0xc3)];_cache['delete'](_0x5e6426);}_cache[_0x390311(0x1a1)](_0x41dd76,{'data':_0x2ac501,'ts':Date[_0x390311(0x3b0)]()});}let _abortCtrl=null,_debounceTimer=null;function debounceSearch(_0xf9762b=0x12c){clearTimeout(_debounceTimer),_debounceTimer=setTimeout(()=>doSearch(0x1),_0xf9762b);}let currentQuery='Charizar'+'d',currentPage=0x1,totalCards=0x0,allResults=[],filterMin=null,filterMax=null,favMode=![],currentSetId=null,currentSetName='',filterRarity='',filterType='';const RECENT_KEY=a0_0xfae5a6(0x213)+a0_0xfae5a6(0x4fc),RECENT_MAX=0xa;function switchTab(_0x267272){const _0x111bb8=a0_0xfae5a6;document[_0x111bb8(0x2c1)+'ectorAll'](_0x111bb8(0x1d2)+_0x111bb8(0x25f))[_0x111bb8(0x52e)](_0xb03afd=>_0xb03afd[_0x111bb8(0x653)+'t'][_0x111bb8(0x365)](_0x111bb8(0x48d))),document[_0x111bb8(0x2c1)+'ectorAll'](_0x111bb8(0x677)+_0x111bb8(0x136))[_0x111bb8(0x52e)](_0x228e3f=>_0x228e3f['classLis'+'t'][_0x111bb8(0x365)](_0x111bb8(0x48d))),document[_0x111bb8(0x258)+_0x111bb8(0x4c2)](_0x111bb8(0x122)+_0x267272)[_0x111bb8(0x653)+'t']['add'](_0x111bb8(0x48d)),document[_0x111bb8(0x2c1)+_0x111bb8(0x336)](_0x111bb8(0x677)+_0x111bb8(0x525)+'ta-tab=\x22'+_0x267272+'\x22]')['classLis'+'t']['add'](_0x111bb8(0x48d));if(_0x267272==='trending')loadTrending();window[_0x111bb8(0x4e7)]({'top':0x0,'behavior':_0x111bb8(0x407)});}function switchCountry(_0x12bcb5){const _0x726e3b=a0_0xfae5a6;document['querySel'+_0x726e3b(0x1eb)](_0x726e3b(0x4a7))[_0x726e3b(0x52e)](_0x39b70d=>_0x39b70d['classLis'+'t'][_0x726e3b(0x365)](_0x726e3b(0x48d))),document[_0x726e3b(0x2c1)+_0x726e3b(0x336)](_0x726e3b(0x1d0)+'ta-count'+_0x726e3b(0x2a7)+_0x12bcb5+'\x22]')['classLis'+'t'][_0x726e3b(0x2f0)](_0x726e3b(0x48d)),document[_0x726e3b(0x2c1)+_0x726e3b(0x1eb)](_0x726e3b(0x2c4)+_0x726e3b(0x4a3))[_0x726e3b(0x52e)](_0x1a92d5=>_0x1a92d5[_0x726e3b(0x16d)][_0x726e3b(0x398)]=_0x726e3b(0x4f2)),document[_0x726e3b(0x258)+'ntById'](_0x726e3b(0xe6)+_0x12bcb5)[_0x726e3b(0x16d)][_0x726e3b(0x398)]=_0x726e3b(0x1cc);}const POPULAR_CARDS=[a0_0xfae5a6(0x617)+'d','Pikachu',a0_0xfae5a6(0x4a6),a0_0xfae5a6(0x4f3),a0_0xfae5a6(0x2d1),a0_0xfae5a6(0x539),a0_0xfae5a6(0x4b3),'Eevee',a0_0xfae5a6(0x523)+'e',a0_0xfae5a6(0x518)];let trendingLoaded=![];const trendingCardCache=new Map();async function loadTrending(){const _0x335eeb=a0_0xfae5a6;if(trendingLoaded)return;const _0x2794a8=document[_0x335eeb(0x258)+_0x335eeb(0x4c2)](_0x335eeb(0x2b3)+'Content');try{const _0x3d09dc=await Promise[_0x335eeb(0x18d)](POPULAR_CARDS[_0x335eeb(0x20c)](async _0x1b7052=>{const _0x1f0cc4=_0x335eeb,_0x235767=_0x1b7052[_0x1f0cc4(0x6ac)]('\x20')?_0x1f0cc4(0x1e4)+_0x1b7052+'\x22*':_0x1f0cc4(0x4cc)+_0x1b7052+'*',_0x3c6c82=API+_0x1f0cc4(0x6cd)+encodeURIComponent(_0x235767)+(_0x1f0cc4(0x249)+'e=10&ord'+_0x1f0cc4(0x586)+_0x1f0cc4(0x228)+_0x1f0cc4(0x442)),_0x1b6090=getCached(_0x3c6c82);if(_0x1b6090)return _0x1b6090;try{const _0x3eaf82=await fetch(_0x3c6c82);if(!_0x3eaf82['ok'])return[];const _0x36a86a=await _0x3eaf82['json'](),_0x460ea1=_0x36a86a['data']||[];return setCache(_0x3c6c82,_0x460ea1),_0x460ea1;}catch{return[];}})),_0x3c3b70=[];POPULAR_CARDS[_0x335eeb(0x52e)]((_0x5cb275,_0x41ba24)=>{const _0x483e14=_0x335eeb,_0x30b62e=_0x3d09dc[_0x41ba24]||[],_0x5866ae=_0x30b62e[_0x483e14(0x3f6)](_0x47f070=>getPrimaryPrice(_0x47f070)!=null)['sort']((_0xd2e79c,_0x1adf93)=>(getPrimaryPrice(_0x1adf93)||0x0)-(getPrimaryPrice(_0xd2e79c)||0x0))[0x0];if(_0x5866ae)_0x3c3b70[_0x483e14(0x60d)](_0x5866ae);}),_0x3c3b70['sort']((_0x205653,_0xd27111)=>(getPrimaryPrice(_0xd27111)||0x0)-(getPrimaryPrice(_0x205653)||0x0)),trendingLoaded=!![],renderTrending(_0x3c3b70);}catch(_0x6abb96){_0x2794a8['innerHTM'+'L']='<div\x20cla'+_0x335eeb(0x326)+'y\x22><div\x20'+_0x335eeb(0x5fd)+_0x335eeb(0x3fe)+_0x335eeb(0x3ba)+_0x335eeb(0x576)+_0x335eeb(0x120)+_0x335eeb(0x5d0)+escHtml(_0x6abb96['message'])+(_0x335eeb(0x195)+'v>');}}function renderTrending(_0x2cb20b){const _0x9b0e57=a0_0xfae5a6,_0x232d98=document[_0x9b0e57(0x258)+_0x9b0e57(0x4c2)]('trending'+_0x9b0e57(0x3b7));if(!_0x2cb20b[_0x9b0e57(0x4b7)]){_0x232d98[_0x9b0e57(0x662)+'L']='<div\x20cla'+_0x9b0e57(0x326)+'y\x22><div\x20'+'class=\x22e'+_0x9b0e57(0x3fe)+_0x9b0e57(0x50b)+_0x9b0e57(0x60c)+_0x9b0e57(0xd0)+_0x9b0e57(0x636);return;}const _0x1b0867=Math[_0x9b0e57(0x1a2)](..._0x2cb20b[_0x9b0e57(0x20c)](_0x3129d0=>{const _0x1547af=_0x9b0e57,_0x583703=_0x3129d0[_0x1547af(0x1d9)+'r']?.[_0x1547af(0x12b)];if(!_0x583703)return 0x0;const _0x14b22a=Object[_0x1547af(0x4fa)](_0x583703)[0x0];return _0x14b22a?.[_0x1547af(0x5e3)]||0x0;}));_0x2cb20b['forEach'](_0x30f1d6=>trendingCardCache[_0x9b0e57(0x1a1)](_0x30f1d6['id'],_0x30f1d6));const _0x2d64ec=_0x2cb20b['map']((_0x389ec9,_0xce5e23)=>{const _0x50fefa=_0x9b0e57,_0x56bdf6=_0x389ec9[_0x50fefa(0x1d9)+'r']?.[_0x50fefa(0x12b)]||{},_0x38af72=Object[_0x50fefa(0x4fa)](_0x56bdf6)[0x0]||{},_0x3ac87d=_0x38af72[_0x50fefa(0xfa)]??_0x38af72['mid']??null,_0x3df39f=_0x38af72['low']??null,_0x52af54=_0x38af72[_0x50fefa(0x5e3)]??null,_0xdba19=_0x52af54&&_0x3df39f?((_0x52af54-_0x3df39f)/(_0x3df39f||0x1)*0x64)[_0x50fefa(0x4c1)](0x0):null,_0x47ca83=_0xce5e23<0x3;return'\x0a\x20\x20\x20\x20<di'+'v\x20class='+_0x50fefa(0x163)+_0x50fefa(0xda)+_0x50fefa(0x3e9)+_0x50fefa(0x5f9)+_0x50fefa(0x5bc)+escHtml(_0x389ec9['id'])+(_0x50fefa(0x181)+_0x50fefa(0x12f)+'class=\x22r'+_0x50fefa(0x5cb))+(_0x47ca83?_0x50fefa(0x458):'')+'\x22>'+(_0xce5e23+0x1)+(_0x50fefa(0x29c)+_0x50fefa(0x6eb)+'g\x20class='+'\x22rank-im'+_0x50fefa(0x63c))+(_0x389ec9[_0x50fefa(0x2c6)]?.[_0x50fefa(0x26f)]||'')+_0x50fefa(0x5ff)+escHtml(_0x389ec9[_0x50fefa(0x5df)])+(_0x50fefa(0x49a)+_0x50fefa(0x3be)+_0x50fefa(0x6e6)+'\x20<div\x20cl'+_0x50fefa(0x348)+'k-info\x22>'+'\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x50fefa(0x46c)+_0x50fefa(0x348)+_0x50fefa(0x28a))+escHtml(_0x389ec9[_0x50fefa(0x5df)])+('</div>\x0a\x20'+'\x20\x20\x20\x20\x20\x20\x20<'+_0x50fefa(0x13f)+_0x50fefa(0x5c5)+_0x50fefa(0xfd))+escHtml(_0x389ec9['set']?.[_0x50fefa(0x5df)]||'')+'\x20·\x20'+(_0x389ec9[_0x50fefa(0x1a1)]?.[_0x50fefa(0x6d3)+_0x50fefa(0x250)]||'')[_0x50fefa(0x6ab)](0x0,0x4)+(_0x50fefa(0x29c)+_0x50fefa(0x30b)+_0x50fefa(0x176)+_0x50fefa(0x4f0)+_0x50fefa(0x12a)+'nk-price'+'-col\x22>\x0a\x20'+'\x20\x20\x20\x20\x20\x20\x20<'+_0x50fefa(0x13f)+_0x50fefa(0x5c5)+_0x50fefa(0x33a))+(_0x3ac87d!=null?'$'+_0x3ac87d[_0x50fefa(0x4c1)](0x2):'—')+('</div>\x0a\x20'+_0x50fefa(0x4c4))+(_0xdba19?_0x50fefa(0x532)+_0x50fefa(0x23e)+_0x50fefa(0xf0)+(_0xdba19>0x1e?'up':_0xdba19>0xa?'flat':'down')+_0x50fefa(0x20e)+_0xdba19+_0x50fefa(0x358):'')+('\x0a\x20\x20\x20\x20\x20\x20<'+_0x50fefa(0x156)+_0x50fefa(0x349));})[_0x9b0e57(0x6bc)](''),_0x3b2928=_0x2cb20b[_0x9b0e57(0x6ab)](0x0,0x8)[_0x9b0e57(0x20c)](_0x29f2a3=>{const _0x4db58a=_0x9b0e57,_0x2c735c=_0x29f2a3[_0x4db58a(0x1d9)+'r']?.[_0x4db58a(0x12b)]||{},_0x16e1a1=Object[_0x4db58a(0x4fa)](_0x2c735c)[0x0]||{},_0x426f47=_0x16e1a1[_0x4db58a(0x39a)]??0x0,_0x544436=_0x16e1a1[_0x4db58a(0xfa)]??_0x16e1a1['mid']??0x0,_0x5bd7c2=_0x16e1a1['high']??0x0;if(!_0x5bd7c2||!_0x1b0867)return'';const _0x569b4e=(_0x426f47/_0x1b0867*0x64)[_0x4db58a(0x4c1)](0x1),_0x3ad0cd=((_0x5bd7c2-_0x426f47)/_0x1b0867*0x64)['toFixed'](0x1),_0x57242e=(_0x544436/_0x1b0867*0x64)[_0x4db58a(0x4c1)](0x1);return _0x4db58a(0x52b)+_0x4db58a(0x196)+'\x22chart-r'+_0x4db58a(0x676)+_0x4db58a(0x12f)+_0x4db58a(0x529)+_0x4db58a(0x1f2)+'-label\x22>'+_0x4db58a(0x60b)+_0x4db58a(0x263)+'lass=\x22ch'+_0x4db58a(0x310)+_0x4db58a(0x5f6)+escHtml(_0x29f2a3['name'])+(_0x4db58a(0x41f)+_0x4db58a(0x6cf)+_0x4db58a(0x5ec)+_0x4db58a(0x421)+_0x4db58a(0x642)+_0x4db58a(0x325))+(_0x544436?'$'+_0x544436[_0x4db58a(0x4c1)](0x2):'—')+(_0x4db58a(0x41f)+_0x4db58a(0x481)+_0x4db58a(0x1a7)+'\x20\x20\x20<div\x20'+'class=\x22c'+_0x4db58a(0x1c8)+_0x4db58a(0x497)+_0x4db58a(0x694)+_0x4db58a(0x6ed)+_0x4db58a(0x260)+_0x4db58a(0x64b)+_0x4db58a(0x293)+'=\x22left:')+_0x569b4e+_0x4db58a(0x453)+_0x3ad0cd+(_0x4db58a(0x390)+'>\x0a\x20\x20\x20\x20\x20\x20'+'\x20\x20')+(_0x544436?_0x4db58a(0x532)+_0x4db58a(0x487)+_0x4db58a(0x671)+_0x4db58a(0x432)+'yle=\x22lef'+'t:'+_0x57242e+(_0x4db58a(0x390)+'>'):'')+(_0x4db58a(0x477)+_0x4db58a(0x156)+_0x4db58a(0x349));})[_0x9b0e57(0x6bc)]('');_0x232d98[_0x9b0e57(0x662)+'L']=_0x9b0e57(0x280)+'class=\x22t'+'rending-'+_0x9b0e57(0x41d)+'\x20\x20\x20<div>'+_0x9b0e57(0x477)+_0x9b0e57(0x13f)+_0x9b0e57(0x203)+_0x9b0e57(0xdb)+_0x9b0e57(0xdd)+_0x9b0e57(0x2b9)+_0x2cb20b['length']+(_0x9b0e57(0xc8)+_0x9b0e57(0x16a)+_0x9b0e57(0x694)+'iv\x20class'+_0x9b0e57(0x2a6)+_0x9b0e57(0x394))+_0x2d64ec+(_0x9b0e57(0x29c)+_0x9b0e57(0xcc)+_0x9b0e57(0x22f)+_0x9b0e57(0x1a0)+_0x9b0e57(0x307)+_0x9b0e57(0x5f3)+_0x9b0e57(0x46d)+'argin-to'+_0x9b0e57(0x457)+_0x9b0e57(0x60b)+'\x20*\x20카드를\x20클'+_0x9b0e57(0x315)+_0x9b0e57(0x1a9)+_0x9b0e57(0xb7)+'\x20\x20</p>\x0a\x20'+_0x9b0e57(0xd1)+_0x9b0e57(0x300)+'iv>\x0a\x20\x20\x20\x20'+_0x9b0e57(0x4f0)+_0x9b0e57(0x3d3)+_0x9b0e57(0x461)+_0x9b0e57(0x5c6)+_0x9b0e57(0x184)+'위\x20차트</di'+_0x9b0e57(0x67b)+'\x20<div\x20cl'+_0x9b0e57(0x421)+_0x9b0e57(0x411)+_0x9b0e57(0x5d6)+_0x9b0e57(0x220)+_0x9b0e57(0x196)+_0x9b0e57(0x316)+_0x9b0e57(0x5ae)+_0x9b0e57(0x32e)+_0x9b0e57(0x32b)+_0x9b0e57(0x6cf)+'<div\x20cla'+_0x9b0e57(0x487)+_0x9b0e57(0x479)+_0x9b0e57(0x128)+'\x20─\x20최고가\x20범'+_0x9b0e57(0x13e)+_0x9b0e57(0x450)+'</div>\x0a\x20'+_0x9b0e57(0x29a)+_0x9b0e57(0x13f)+_0x9b0e57(0x23f)+'-rows\x22>')+_0x3b2928+(_0x9b0e57(0x29c)+'\x20\x20\x20\x20\x20\x20\x20<'+_0x9b0e57(0x13f)+_0x9b0e57(0x23f)+_0x9b0e57(0x6e8)+_0x9b0e57(0x6b0)+_0x9b0e57(0x543)+_0x9b0e57(0x646)+'lass=\x22le'+_0x9b0e57(0x225)+_0x9b0e57(0x2a8)+_0x9b0e57(0x684)+_0x9b0e57(0x191)+_0x9b0e57(0x540)+'(90deg,v'+_0x9b0e57(0x6a9)+_0x9b0e57(0x2c8)+'--gold))'+_0x9b0e57(0x5ef)+_0x9b0e57(0x3e3)+_0x9b0e57(0xc1)+'\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x9b0e57(0x468)+_0x9b0e57(0x114)+'ass=\x22leg'+_0x9b0e57(0x2ac)+'/div>\x20시장'+_0x9b0e57(0x520)+_0x9b0e57(0x1b7)+_0x9b0e57(0x60b)+'\x20</div>\x0a'+_0x9b0e57(0x481)+_0x9b0e57(0x1a7)+_0x9b0e57(0x12f)+_0x9b0e57(0x5fd)+_0x9b0e57(0x696)+_0x9b0e57(0x2bb)+_0x9b0e57(0x293)+_0x9b0e57(0x560)+_0x9b0e57(0x171)+_0x9b0e57(0x4da)+_0x9b0e57(0xec)+_0x9b0e57(0x160)+_0x9b0e57(0x1c4)+'</strong'+_0x9b0e57(0x112)+_0x9b0e57(0x6cf)+_0x9b0e57(0x6f1)+_0x9b0e57(0x133)+_0x9b0e57(0x531)+_0x9b0e57(0x305)+_0x9b0e57(0x60b)+'\x2030일\x20가격\x20'+_0x9b0e57(0x35a)+'는\x20<stron'+_0x9b0e57(0x35b)+_0x9b0e57(0x27b)+_0x9b0e57(0x199)+_0x9b0e57(0x1b0)+_0x9b0e57(0x2cb)+_0x9b0e57(0xd1)+_0x9b0e57(0x2b1)+_0x9b0e57(0x14f)+_0x9b0e57(0x69d));}function openTrendingCard(_0x3c57c8){const _0x5d97d8=a0_0xfae5a6,_0x4bf4d2=trendingCardCache[_0x5d97d8(0x59e)](_0x3c57c8);_0x4bf4d2&&openModal(_0x4bf4d2);}function openCardSearch(_0x29a095){const _0x5c1fe9=a0_0xfae5a6;switchTab(_0x5c1fe9(0x1af)),document[_0x5c1fe9(0x258)+'ntById'](_0x5c1fe9(0x582)+_0x5c1fe9(0x68e))[_0x5c1fe9(0xc3)]=_0x29a095,setChip(null),doSearch(0x1);}function goHome(){const _0x36ad18=a0_0xfae5a6;closeAbout(),switchTab(_0x36ad18(0x1af));if(favMode)toggleFavMode();closeModal(),resetSearch(),window[_0x36ad18(0x4e7)]({'top':0x0,'behavior':'smooth'});}function openAbout(){const _0x96ddc7=a0_0xfae5a6,_0x745193=new Date(),_0x1534a7=_0x3c82a3=>String(_0x3c82a3)['padStart'](0x2,'0'),_0x12df17=_0x745193['getFullY'+_0x96ddc7(0x547)]()+'.'+_0x1534a7(_0x745193[_0x96ddc7(0x546)]()+0x1)+'.'+_0x1534a7(_0x745193[_0x96ddc7(0x3e5)]())+'\x20'+_0x1534a7(_0x745193[_0x96ddc7(0x3c6)]())+':'+_0x1534a7(_0x745193[_0x96ddc7(0x4a8)+'es']());document['getEleme'+'ntById']('aboutAcc'+_0x96ddc7(0x629))[_0x96ddc7(0x391)+_0x96ddc7(0x595)]=_0x12df17,document['getEleme'+_0x96ddc7(0x4c2)](_0x96ddc7(0x152)+'e')[_0x96ddc7(0x653)+'t'][_0x96ddc7(0x2f0)](_0x96ddc7(0x3f9)),document['body']['style'][_0x96ddc7(0x57e)]=_0x96ddc7(0x318);}function closeAbout(){const _0x34e259=a0_0xfae5a6;document[_0x34e259(0x258)+_0x34e259(0x4c2)](_0x34e259(0x152)+'e')[_0x34e259(0x653)+'t']['remove'](_0x34e259(0x3f9)),document[_0x34e259(0x377)]['style'][_0x34e259(0x57e)]='';}function loadRecent(){const _0x1a3a50=a0_0xfae5a6;try{return JSON[_0x1a3a50(0x31f)](localStorage[_0x1a3a50(0x61f)](RECENT_KEY)||'[]');}catch{return[];}}function saveRecent(_0x262f67){const _0x36d79e=a0_0xfae5a6;localStorage[_0x36d79e(0x42a)](RECENT_KEY,JSON[_0x36d79e(0xff)+'y'](_0x262f67));}function addRecent(_0x50074c){const _0x5c5408=a0_0xfae5a6;let _0x4551d4=loadRecent();_0x4551d4=_0x4551d4[_0x5c5408(0x3f6)](_0x3c7258=>_0x3c7258['id']!==_0x50074c['id']),_0x4551d4[_0x5c5408(0x37a)]({'id':_0x50074c['id'],'name':_0x50074c[_0x5c5408(0x5df)],'img':_0x50074c[_0x5c5408(0x2c6)]?.[_0x5c5408(0x26f)]||'','set':_0x50074c[_0x5c5408(0x1a1)]?.[_0x5c5408(0x5df)]||''});if(_0x4551d4['length']>RECENT_MAX)_0x4551d4=_0x4551d4[_0x5c5408(0x6ab)](0x0,RECENT_MAX);saveRecent(_0x4551d4),renderRecent();}function clearRecent(){localStorage['removeIt'+'em'](RECENT_KEY),renderRecent();}function renderRecent(){const _0x23db53=a0_0xfae5a6,_0x32e714=loadRecent(),_0x4de91b=document['getEleme'+_0x23db53(0x4c2)](_0x23db53(0x553)+'ction'),_0x3991aa=document[_0x23db53(0x258)+'ntById'](_0x23db53(0x207)+'roll');if(!_0x32e714[_0x23db53(0x4b7)]){_0x4de91b[_0x23db53(0x653)+'t']['remove'](_0x23db53(0x438));return;}_0x4de91b[_0x23db53(0x653)+'t'][_0x23db53(0x2f0)](_0x23db53(0x438)),_0x3991aa['innerHTM'+'L']='',_0x32e714['forEach'](_0x5d4c53=>{const _0x555b34=_0x23db53,_0x4f1549=document[_0x555b34(0x54f)+_0x555b34(0x63a)](_0x555b34(0x5be));_0x4f1549[_0x555b34(0x226)+'e']=_0x555b34(0x408)+'ard',_0x4f1549[_0x555b34(0x2ba)]=_0x5d4c53[_0x555b34(0x5df)]+'\x20·\x20'+_0x5d4c53[_0x555b34(0x1a1)],_0x4f1549['innerHTM'+'L']=_0x555b34(0x509)+'=\x22'+escHtml(_0x5d4c53['img'])+_0x555b34(0x5ff)+escHtml(_0x5d4c53[_0x555b34(0x5df)])+(_0x555b34(0x49a)+'g=\x22lazy\x22'+'/><div\x20c'+_0x555b34(0x3fb)+'cent-car'+_0x555b34(0x570))+escHtml(_0x5d4c53['name'])+'</div>',_0x4f1549[_0x555b34(0x594)]=()=>{const _0x4ebfb3=_0x555b34;document[_0x4ebfb3(0x258)+_0x4ebfb3(0x4c2)]('searchIn'+_0x4ebfb3(0x68e))[_0x4ebfb3(0xc3)]=_0x5d4c53[_0x4ebfb3(0x5df)],setChip(null),doSearch(0x1),window[_0x4ebfb3(0x4e7)]({'top':0x0,'behavior':'smooth'});},_0x3991aa['appendCh'+_0x555b34(0x427)](_0x4f1549);});}function onRarityTypeChip(_0x18f225){const _0x2151bf=a0_0xfae5a6,_0x1fffff=_0x18f225[_0x2151bf(0x29e)]['type'],_0x4e5805=_0x18f225[_0x2151bf(0x29e)]['val'],_0x29dfbb=_0x1fffff===_0x2151bf(0xd8)?_0x2151bf(0x38f)+_0x2151bf(0x521):_0x2151bf(0x180)+'s';document[_0x2151bf(0x2c1)+'ectorAll']('#'+_0x29dfbb+_0x2151bf(0x1df))[_0x2151bf(0x52e)](_0x5a17d2=>_0x5a17d2[_0x2151bf(0x653)+'t'][_0x2151bf(0x365)](_0x2151bf(0x48d))),_0x18f225['classLis'+'t'][_0x2151bf(0x2f0)]('active');if(_0x1fffff===_0x2151bf(0xd8))filterRarity=_0x4e5805;else filterType=_0x4e5805;debounceSearch(0xfa);}function clearRarityType(){const _0x1a1fe7=a0_0xfae5a6;filterRarity='',filterType='',document[_0x1a1fe7(0x2c1)+_0x1a1fe7(0x336)]('#rarityC'+_0x1a1fe7(0x6b1)+_0x1a1fe7(0x6ce)+_0x1a1fe7(0x24d)+']')['classLis'+'t'][_0x1a1fe7(0x2f0)](_0x1a1fe7(0x48d)),document[_0x1a1fe7(0x2c1)+'ectorAll'](_0x1a1fe7(0x3a5)+'hips\x20.r-'+_0x1a1fe7(0x478)+_0x1a1fe7(0x54c)+_0x1a1fe7(0x27d))['forEach'](_0x2f2848=>_0x2f2848[_0x1a1fe7(0x653)+'t'][_0x1a1fe7(0x365)](_0x1a1fe7(0x48d))),document[_0x1a1fe7(0x2c1)+'ector'](_0x1a1fe7(0x4ff)+'ps\x20.r-ch'+_0x1a1fe7(0x467)+_0x1a1fe7(0x4de))[_0x1a1fe7(0x653)+'t'][_0x1a1fe7(0x2f0)]('active'),document['querySel'+'ectorAll']('#typeChi'+_0x1a1fe7(0x4ca)+'ip:not(['+_0x1a1fe7(0x4ce)+_0x1a1fe7(0x15a))[_0x1a1fe7(0x52e)](_0x36e8fd=>_0x36e8fd[_0x1a1fe7(0x653)+'t'][_0x1a1fe7(0x365)](_0x1a1fe7(0x48d)));}const SETS_API=a0_0xfae5a6(0x552)+'api.poke'+a0_0xfae5a6(0x117)+'o/v2/set'+'s',seriesKo={'Scarlet\x20&\x20Violet':a0_0xfae5a6(0x2a9)+'올렛','Sword\x20&\x20Shield':a0_0xfae5a6(0x53f),'Sun\x20&\x20Moon':'썬\x20&\x20문','XY':'XY','Black\x20&\x20White':a0_0xfae5a6(0x616),'HeartGold\x20&\x20SoulSilver':a0_0xfae5a6(0x5b0)+a0_0xfae5a6(0x494),'Platinum':a0_0xfae5a6(0x6d8),'Diamond\x20&\x20Pearl':'다이아몬드\x20&\x20'+'펄','EX':'EX\x20시리즈','e-Card':a0_0xfae5a6(0x6ad),'Neo':'Neo\x20시리즈','Gym':a0_0xfae5a6(0x21b),'Base':a0_0xfae5a6(0x17c),'Other':'기타'};async function loadSets(){const _0x52df84=a0_0xfae5a6;try{const _0xb3fa52=await fetch(SETS_API+('?orderBy'+_0x52df84(0x439)+_0x52df84(0x198)+'geSize=3'+'00')),_0x4b69e4=await _0xb3fa52[_0x52df84(0x1c2)](),_0xf1eeb4=_0x4b69e4['data']||[],_0x464d39={};_0xf1eeb4[_0x52df84(0x52e)](_0x1b9658=>{const _0x2eb433=_0x52df84,_0x346e78=_0x1b9658[_0x2eb433(0x3c9)]||_0x2eb433(0x412);if(!_0x464d39[_0x346e78])_0x464d39[_0x346e78]=[];_0x464d39[_0x346e78]['push'](_0x1b9658);});const _0x543d26=document[_0x52df84(0x258)+'ntById'](_0x52df84(0x5b7)+'t');_0x543d26[_0x52df84(0x662)+'L']='<option\x20'+_0x52df84(0x643)+_0x52df84(0x2d0)+_0x52df84(0x6b7)+_0x52df84(0xdf);const _0x6b16be=[...new Set(_0xf1eeb4[_0x52df84(0x20c)](_0x2ea675=>_0x2ea675['series']||'Other'))];_0x6b16be[_0x52df84(0x52e)](_0x5aebdb=>{const _0x492c0b=_0x52df84,_0x56389e=document[_0x492c0b(0x54f)+_0x492c0b(0x63a)](_0x492c0b(0x342));_0x56389e[_0x492c0b(0x14b)]=''+(seriesKo[_0x5aebdb]||_0x5aebdb),_0x464d39[_0x5aebdb][_0x492c0b(0x52e)](_0x5262b9=>{const _0x3b7b24=_0x492c0b,_0x4f19a1=document['createEl'+_0x3b7b24(0x63a)](_0x3b7b24(0x217));_0x4f19a1[_0x3b7b24(0xc3)]=_0x5262b9['id'],_0x4f19a1[_0x3b7b24(0x29e)][_0x3b7b24(0x5df)]=_0x5262b9[_0x3b7b24(0x5df)],_0x4f19a1[_0x3b7b24(0x29e)]['total']=_0x5262b9[_0x3b7b24(0x16b)],_0x4f19a1[_0x3b7b24(0x29e)]['release']=(_0x5262b9[_0x3b7b24(0x6d3)+_0x3b7b24(0x250)]||'')[_0x3b7b24(0x6ab)](0x0,0x4),_0x4f19a1['textCont'+_0x3b7b24(0x595)]=_0x5262b9[_0x3b7b24(0x5df)]+'\x20('+(_0x5262b9[_0x3b7b24(0x6d3)+_0x3b7b24(0x250)]||'')[_0x3b7b24(0x6ab)](0x0,0x4)+')\x20·\x20'+_0x5262b9['total']+'장',_0x56389e[_0x3b7b24(0x58b)+_0x3b7b24(0x427)](_0x4f19a1);}),_0x543d26[_0x492c0b(0x58b)+_0x492c0b(0x427)](_0x56389e);});if(currentSetId)_0x543d26[_0x52df84(0xc3)]=currentSetId;}catch(_0x4d19be){document[_0x52df84(0x258)+_0x52df84(0x4c2)](_0x52df84(0x5b7)+'t')[_0x52df84(0x662)+'L']='<option\x20'+_0x52df84(0x643)+'>세트\x20목록\x20불'+_0x52df84(0x140)+'option>';}}function onSetChange(_0x26d989){const _0x39d204=a0_0xfae5a6,_0xd9a5c9=document[_0x39d204(0x258)+_0x39d204(0x4c2)]('setSelec'+'t'),_0x287d6e=_0xd9a5c9[_0x39d204(0x2c1)+_0x39d204(0x336)](_0x39d204(0x3ee)+_0x39d204(0x65f)+_0x26d989+'\x22]');if(!_0x26d989){clearSetFilter();return;}currentSetId=_0x26d989,currentSetName=_0x287d6e?_0x287d6e['dataset'][_0x39d204(0x5df)]:_0x26d989;const _0x4e4591=_0x287d6e?_0x287d6e[_0x39d204(0x29e)][_0x39d204(0x16b)]:'',_0x2d2eb1=_0x287d6e?_0x287d6e[_0x39d204(0x29e)]['release']:'';document[_0x39d204(0x258)+_0x39d204(0x4c2)]('setInfo')['textCont'+_0x39d204(0x595)]=_0x4e4591?_0x4e4591+_0x39d204(0x20b)+_0x2d2eb1:'',document['getEleme'+_0x39d204(0x4c2)](_0x39d204(0x64f)+'Text')[_0x39d204(0x391)+_0x39d204(0x595)]=currentSetName,document[_0x39d204(0x258)+_0x39d204(0x4c2)](_0x39d204(0x64f))[_0x39d204(0x653)+'t'][_0x39d204(0x2f0)](_0x39d204(0x438)),document[_0x39d204(0x258)+_0x39d204(0x4c2)](_0x39d204(0x253)+_0x39d204(0x2d2))[_0x39d204(0x653)+'t'][_0x39d204(0x2f0)](_0x39d204(0x438)),debounceSearch(0xc8);}function clearSetFilter(){const _0x444222=a0_0xfae5a6;currentSetId=null,currentSetName='',document[_0x444222(0x258)+_0x444222(0x4c2)](_0x444222(0x5b7)+'t')['value']='',document[_0x444222(0x258)+'ntById'](_0x444222(0x314))['textCont'+'ent']='',document[_0x444222(0x258)+_0x444222(0x4c2)](_0x444222(0x64f))[_0x444222(0x653)+'t'][_0x444222(0x365)]('show'),document['getEleme'+_0x444222(0x4c2)](_0x444222(0x253)+_0x444222(0x2d2))[_0x444222(0x653)+'t'][_0x444222(0x365)](_0x444222(0x438)),applyFilterAndRender();}async function browseSet(){const _0xad1925=a0_0xfae5a6;if(!currentSetId)return;document['getEleme'+_0xad1925(0x4c2)]('searchIn'+'put')[_0xad1925(0xc3)]='',currentQuery='',hideTlBanner(),document[_0xad1925(0x2c1)+_0xad1925(0x1eb)]('.chip')['forEach'](_0x4c96e6=>_0x4c96e6[_0xad1925(0x653)+'t']['remove'](_0xad1925(0x48d))),await doSearch(0x1);}function loadFavs(){const _0x201421=a0_0xfae5a6;try{return JSON[_0x201421(0x31f)](localStorage['getItem'](FAV_KEY)||'{}');}catch{return{};}}function saveFavs(_0x1e891d){const _0x170e48=a0_0xfae5a6;localStorage['setItem'](FAV_KEY,JSON[_0x170e48(0xff)+'y'](_0x1e891d));}function isFav(_0x2d873c){return!!loadFavs()[_0x2d873c];}function toggleFavorite(_0x31a287,_0x3621e8){const _0x1ad55c=a0_0xfae5a6;_0x3621e8[_0x1ad55c(0x2ce)+_0x1ad55c(0x459)]();const _0x35c034=loadFavs();_0x35c034[_0x31a287['id']]?delete _0x35c034[_0x31a287['id']]:_0x35c034[_0x31a287['id']]={'id':_0x31a287['id'],'name':_0x31a287['name'],'setName':_0x31a287[_0x1ad55c(0x1a1)]?.[_0x1ad55c(0x5df)]||'','number':_0x31a287['number']||'','image':_0x31a287['images']?.['small']||'','largImage':_0x31a287['images']?.['large']||'','rarity':_0x31a287['rarity']||'','tcgUrl':_0x31a287[_0x1ad55c(0x1d9)+'r']?.['url']||'','prices':_0x31a287[_0x1ad55c(0x1d9)+'r']?.[_0x1ad55c(0x12b)]||{},'supertype':_0x31a287['supertyp'+'e']||'','types':_0x31a287[_0x1ad55c(0x3ce)]||[],'savedAt':Date[_0x1ad55c(0x3b0)]()};saveFavs(_0x35c034),updateFavUI();const _0x226815=_0x3621e8['currentT'+_0x1ad55c(0x167)],_0x4137e0=!!_0x35c034[_0x31a287['id']];_0x226815[_0x1ad55c(0x2c1)+_0x1ad55c(0x336)]('.heart')[_0x1ad55c(0x391)+'ent']=_0x4137e0?'❤️':'🤍',_0x226815[_0x1ad55c(0x653)+'t'][_0x1ad55c(0x619)](_0x1ad55c(0x48d),_0x4137e0);const _0x756399=_0x226815['closest'](_0x1ad55c(0x3da));if(_0x756399)_0x756399[_0x1ad55c(0x653)+'t'][_0x1ad55c(0x619)](_0x1ad55c(0x36a)+'d',_0x4137e0);if(favMode)renderFavMode();}function updateFavUI(){const _0x16687f=a0_0xfae5a6,_0x54b3d1=loadFavs(),_0x540bf2=Object['keys'](_0x54b3d1)[_0x16687f(0x4b7)],_0x176ac1=document[_0x16687f(0x258)+'ntById'](_0x16687f(0x1bc));_0x176ac1[_0x16687f(0x391)+'ent']=_0x540bf2,_0x176ac1['classLis'+'t'][_0x16687f(0x619)](_0x16687f(0x438),_0x540bf2>0x0);}function toggleFavMode(){const _0x450e35=a0_0xfae5a6;favMode=!favMode;const _0x31757c=document[_0x450e35(0x258)+'ntById'](_0x450e35(0x1f5)+'n'),_0x4a7d1f=document[_0x450e35(0x258)+_0x450e35(0x4c2)](_0x450e35(0x6a8)+'r');_0x31757c[_0x450e35(0x653)+'t'][_0x450e35(0x619)](_0x450e35(0x48d),favMode),_0x4a7d1f[_0x450e35(0x653)+'t'][_0x450e35(0x619)]('show',favMode),favMode?renderFavMode():applyFilterAndRender();}function renderFavMode(){const _0xfa1ec0=a0_0xfae5a6,_0x8a3ad7=loadFavs(),_0x4821d8=Object[_0xfa1ec0(0x4fa)](_0x8a3ad7)[_0xfa1ec0(0x3c2)]((_0x1ef987,_0x416ef5)=>_0x416ef5[_0xfa1ec0(0x129)]-_0x1ef987['savedAt']),_0x498186=document[_0xfa1ec0(0x258)+'ntById'](_0xfa1ec0(0x30d));document[_0xfa1ec0(0x258)+_0xfa1ec0(0x4c2)](_0xfa1ec0(0x1c1))[_0xfa1ec0(0x16d)][_0xfa1ec0(0x398)]=_0xfa1ec0(0x350),document[_0xfa1ec0(0x258)+_0xfa1ec0(0x4c2)](_0xfa1ec0(0x11e)+'nt')[_0xfa1ec0(0x391)+'ent']=_0x4821d8[_0xfa1ec0(0x4b7)],document[_0xfa1ec0(0x258)+'ntById']('pageInfo')[_0xfa1ec0(0x391)+_0xfa1ec0(0x595)]='즐겨찾기',document['getEleme'+_0xfa1ec0(0x4c2)](_0xfa1ec0(0x1b6)+'on')[_0xfa1ec0(0x662)+'L']='',_0x498186[_0xfa1ec0(0x662)+'L']='';if(!_0x4821d8[_0xfa1ec0(0x4b7)]){_0x498186[_0xfa1ec0(0x662)+'L']=_0xfa1ec0(0x477)+_0xfa1ec0(0x13f)+_0xfa1ec0(0x371)+_0xfa1ec0(0x3e6)+_0xfa1ec0(0x29a)+_0xfa1ec0(0x13f)+_0xfa1ec0(0x371)+_0xfa1ec0(0x3fe)+_0xfa1ec0(0x134)+_0xfa1ec0(0x67b)+_0xfa1ec0(0x51a)+'겨찾기가\x20비어있'+_0xfa1ec0(0xb9)+_0xfa1ec0(0x6cf)+_0xfa1ec0(0x56a)+_0xfa1ec0(0x5c7)+_0xfa1ec0(0x243)+'겨찾기에\x20추가해'+_0xfa1ec0(0x238)+_0xfa1ec0(0x481)+_0xfa1ec0(0x585);return;}_0x4821d8[_0xfa1ec0(0x52e)](_0x15a9aa=>{const _0x2bd674=_0xfa1ec0,_0x515b69={'id':_0x15a9aa['id'],'name':_0x15a9aa[_0x2bd674(0x5df)],'set':{'name':_0x15a9aa[_0x2bd674(0x309)]},'number':_0x15a9aa['number'],'images':{'small':_0x15a9aa[_0x2bd674(0x3b9)],'large':_0x15a9aa[_0x2bd674(0x3e8)+'e']},'rarity':_0x15a9aa[_0x2bd674(0xd8)],'tcgplayer':{'url':_0x15a9aa[_0x2bd674(0x601)],'prices':_0x15a9aa[_0x2bd674(0x12b)]},'supertype':_0x15a9aa[_0x2bd674(0x2a4)+'e'],'types':_0x15a9aa['types']};_0x498186[_0x2bd674(0x58b)+_0x2bd674(0x427)](buildCard(_0x515b69));});}function clearAllFavs(){const _0x2943be=a0_0xfae5a6;if(!confirm(_0x2943be(0xe0)+'\x20삭제할까요?'))return;localStorage[_0x2943be(0x413)+'em'](FAV_KEY),updateFavUI(),renderFavMode();}const gradeNames={'normal':a0_0xfae5a6(0x69f)+a0_0xfae5a6(0x19e),'holofoil':a0_0xfae5a6(0x2ff)+'lofoil)','reverseHolofoil':a0_0xfae5a6(0x1b5)+'Reverse\x20'+a0_0xfae5a6(0x416),'1stEditionHolofoil':'1st\x20에디션\x20'+'홀로','1stEditionNormal':a0_0xfae5a6(0x1ac)+'일반','unlimitedHolofoil':a0_0xfae5a6(0x36d)};function fmt(_0x40a577){const _0x2ba37f=a0_0xfae5a6;return _0x40a577!=null?'$'+Number(_0x40a577)[_0x2ba37f(0x4c1)](0x2):'—';}function getPrimaryPrice(_0x384339){const _0xb8150e=a0_0xfae5a6,_0x18b012=_0x384339['tcgplaye'+'r']?.[_0xb8150e(0x12b)];if(!_0x18b012)return null;const _0x2ea823=[_0xb8150e(0x3f5),_0xb8150e(0x60e)+_0xb8150e(0x291)+'il',_0xb8150e(0x1e1)+'dHolofoi'+'l',_0xb8150e(0x5d2)+_0xb8150e(0x6a6),_0xb8150e(0x5a6),'1stEditi'+_0xb8150e(0x5e2)];for(const _0x1f1969 of _0x2ea823){if(_0x18b012[_0x1f1969]?.[_0xb8150e(0xfa)]!=null)return _0x18b012[_0x1f1969][_0xb8150e(0xfa)];if(_0x18b012[_0x1f1969]?.[_0xb8150e(0x3a2)]!=null)return _0x18b012[_0x1f1969][_0xb8150e(0x3a2)];}const _0x173d04=Object[_0xb8150e(0x4fa)](_0x18b012)[0x0];return _0x173d04?.[_0xb8150e(0xfa)]??_0x173d04?.[_0xb8150e(0x3a2)]??null;}function filterByPrice(_0x30386d){const _0xeb6948=a0_0xfae5a6,_0x1b081f=document[_0xeb6948(0x258)+_0xeb6948(0x4c2)](_0xeb6948(0x4aa)+'ice')[_0xeb6948(0x4e8)];return _0x30386d[_0xeb6948(0x3f6)](_0xe4c46=>{const _0x34e084=_0xeb6948,_0x540cf6=getPrimaryPrice(_0xe4c46);if(_0x540cf6==null){if(_0x1b081f)return![];}else{if(filterMin!==null&&_0x540cf6<filterMin)return![];if(filterMax!==null&&_0x540cf6>filterMax)return![];}if(filterRarity&&_0xe4c46[_0x34e084(0xd8)]!==filterRarity)return![];if(filterType&&!(_0xe4c46[_0x34e084(0x3ce)]||[])[_0x34e084(0x6ac)](filterType))return![];return!![];});}function applyPreset(_0x4e3e98){const _0x350ee6=a0_0xfae5a6;document[_0x350ee6(0x2c1)+_0x350ee6(0x1eb)](_0x350ee6(0x33c)+_0x350ee6(0x5b5))['forEach'](_0x450530=>_0x450530[_0x350ee6(0x653)+'t'][_0x350ee6(0x365)]('active')),_0x4e3e98[_0x350ee6(0x653)+'t']['add'](_0x350ee6(0x48d));const _0x3f4aec=_0x4e3e98[_0x350ee6(0x29e)][_0x350ee6(0x5a4)]!==''?Number(_0x4e3e98[_0x350ee6(0x29e)][_0x350ee6(0x5a4)]):null,_0x373b1c=_0x4e3e98[_0x350ee6(0x29e)][_0x350ee6(0x1a2)]!==''?Number(_0x4e3e98[_0x350ee6(0x29e)][_0x350ee6(0x1a2)]):null;filterMin=_0x3f4aec,filterMax=_0x373b1c,document[_0x350ee6(0x258)+'ntById']('priceMin')[_0x350ee6(0xc3)]=_0x3f4aec??'',document[_0x350ee6(0x258)+'ntById'](_0x350ee6(0x137))[_0x350ee6(0xc3)]=_0x373b1c??'',applyFilterAndRender();}function applyCustomFilter(){const _0x92b1fd=a0_0xfae5a6,_0x31af35=document[_0x92b1fd(0x258)+_0x92b1fd(0x4c2)]('priceMin')[_0x92b1fd(0xc3)],_0x5d7fe4=document[_0x92b1fd(0x258)+_0x92b1fd(0x4c2)]('priceMax')[_0x92b1fd(0xc3)];filterMin=_0x31af35!==''?Number(_0x31af35):null,filterMax=_0x5d7fe4!==''?Number(_0x5d7fe4):null,document[_0x92b1fd(0x2c1)+_0x92b1fd(0x1eb)](_0x92b1fd(0x33c)+_0x92b1fd(0x5b5))[_0x92b1fd(0x52e)](_0x290c73=>_0x290c73['classLis'+'t'][_0x92b1fd(0x365)]('active')),filterMin===null&&filterMax===null&&document[_0x92b1fd(0x2c1)+_0x92b1fd(0x336)](_0x92b1fd(0x33c)+_0x92b1fd(0x26e)+'-min=\x22\x22]'+_0x92b1fd(0x18e)+_0x92b1fd(0x551))[_0x92b1fd(0x653)+'t']['add'](_0x92b1fd(0x48d)),applyFilterAndRender();}function clearFilter(){const _0x4360d4=a0_0xfae5a6;filterMin=null,filterMax=null,document[_0x4360d4(0x258)+_0x4360d4(0x4c2)](_0x4360d4(0x2be))['value']='',document[_0x4360d4(0x258)+_0x4360d4(0x4c2)](_0x4360d4(0x137))[_0x4360d4(0xc3)]='',document[_0x4360d4(0x258)+_0x4360d4(0x4c2)](_0x4360d4(0x4aa)+'ice')['checked']=![],document['querySel'+_0x4360d4(0x1eb)]('.preset-'+_0x4360d4(0x5b5))['forEach'](_0x2a31a7=>_0x2a31a7[_0x4360d4(0x653)+'t'][_0x4360d4(0x365)]('active')),document[_0x4360d4(0x2c1)+_0x4360d4(0x336)](_0x4360d4(0x33c)+_0x4360d4(0x26e)+_0x4360d4(0x4ed)+_0x4360d4(0x18e)+_0x4360d4(0x551))[_0x4360d4(0x653)+'t'][_0x4360d4(0x2f0)](_0x4360d4(0x48d)),clearRarityType(),applyFilterAndRender();}function applyFilterAndRender(){const _0x92275a=a0_0xfae5a6;if(!allResults[_0x92275a(0x4b7)])return;const _0x30cf76=document[_0x92275a(0x258)+_0x92275a(0x4c2)]('sortSele'+'ct')[_0x92275a(0xc3)],_0x204833=sortCards(allResults,_0x30cf76),_0x3f787d=filterByPrice(_0x204833);currentPage=0x1,totalCards=_0x3f787d[_0x92275a(0x4b7)],document[_0x92275a(0x258)+_0x92275a(0x4c2)]('totalCou'+'nt')[_0x92275a(0x391)+_0x92275a(0x595)]=totalCards,renderPage(_0x3f787d,0x1),renderPagination(_0x3f787d),updateFilterBadge();}function updateFilterBadge(){const _0x259a0a=a0_0xfae5a6,_0x380c14=filterMin!==null||filterMax!==null||document[_0x259a0a(0x258)+_0x259a0a(0x4c2)](_0x259a0a(0x4aa)+'ice')[_0x259a0a(0x4e8)]||filterRarity!==''||filterType!=='',_0x24747c=document[_0x259a0a(0x258)+_0x259a0a(0x4c2)]('filterBa'+_0x259a0a(0xee)),_0x5a777c=document[_0x259a0a(0x258)+'ntById'](_0x259a0a(0x257)+_0x259a0a(0x10a));_0x24747c[_0x259a0a(0x653)+'t'][_0x259a0a(0x619)]('show',_0x380c14),_0x5a777c[_0x259a0a(0x16d)][_0x259a0a(0x398)]=_0x380c14?_0x259a0a(0x1cc):_0x259a0a(0x4f2);}function sortCards(_0x2361f7,_0x5cd1fc){const _0x2fca8d=a0_0xfae5a6,_0x47faad=[..._0x2361f7];if(_0x5cd1fc===_0x2fca8d(0x5cc)+'sc')return _0x47faad[_0x2fca8d(0x3c2)]((_0x5a3143,_0x182915)=>(getPrimaryPrice(_0x182915)||0x0)-(getPrimaryPrice(_0x5a3143)||0x0));if(_0x5cd1fc===_0x2fca8d(0xbe)+'c')return _0x47faad[_0x2fca8d(0x3c2)]((_0x557667,_0xd35840)=>{const _0x1ccd2f=getPrimaryPrice(_0x557667),_0x334f7c=getPrimaryPrice(_0xd35840);if(_0x1ccd2f==null&&_0x334f7c==null)return 0x0;if(_0x1ccd2f==null)return 0x1;if(_0x334f7c==null)return-0x1;return _0x1ccd2f-_0x334f7c;});if(_0x5cd1fc===_0x2fca8d(0x5df))return _0x47faad[_0x2fca8d(0x3c2)]((_0x57490d,_0x5bef25)=>_0x57490d[_0x2fca8d(0x5df)][_0x2fca8d(0x161)+_0x2fca8d(0x651)](_0x5bef25['name']));return _0x47faad;}const nameMap={'이상해씨':'Bulbasau'+'r','フシギダネ':a0_0xfae5a6(0x463)+'r','이상해풀':a0_0xfae5a6(0x299),'フシギソウ':'Ivysaur','이상해꽃':a0_0xfae5a6(0x518),'フシギバナ':a0_0xfae5a6(0x518),'파이리':a0_0xfae5a6(0x235)+'er','ヒトカゲ':a0_0xfae5a6(0x235)+'er','리자드':a0_0xfae5a6(0x3f8)+'on','リザード':a0_0xfae5a6(0x3f8)+'on','리자몽':a0_0xfae5a6(0x617)+'d','リザードン':a0_0xfae5a6(0x617)+'d','꼬부기':a0_0xfae5a6(0x321),'ゼニガメ':'Squirtle','어니부기':'Wartortl'+'e','カメール':a0_0xfae5a6(0x484)+'e','거북왕':a0_0xfae5a6(0x523)+'e','カメックス':'Blastois'+'e','캐터피':a0_0xfae5a6(0x210),'キャタピー':a0_0xfae5a6(0x210),'단데기':a0_0xfae5a6(0x5bb),'トランセル':'Metapod','버터플':'Butterfr'+'ee','バタフリー':a0_0xfae5a6(0x50c)+'ee','뿔충이':a0_0xfae5a6(0x10d),'ビードル':a0_0xfae5a6(0x10d),'딱충이':'Kakuna','コクーン':a0_0xfae5a6(0x4ea),'독침붕':a0_0xfae5a6(0x1d5),'スピアー':a0_0xfae5a6(0x1d5),'구구':a0_0xfae5a6(0x334),'ポッポ':a0_0xfae5a6(0x334),'피죤':a0_0xfae5a6(0x35f)+'o','ピジョン':'Pidgeott'+'o','피죤투':a0_0xfae5a6(0x58f),'ピジョット':a0_0xfae5a6(0x58f),'꼬렛':'Rattata','コラッタ':a0_0xfae5a6(0x61d),'레트라':a0_0xfae5a6(0x5ce),'ラッタ':'Raticate','깨비참':a0_0xfae5a6(0x38e),'オニスズメ':a0_0xfae5a6(0x38e),'깨비드릴조':a0_0xfae5a6(0x2f8),'オニドリル':a0_0xfae5a6(0x2f8),'아보':a0_0xfae5a6(0xc4),'アーボ':a0_0xfae5a6(0xc4),'아보크':'Arbok','アーボック':'Arbok','피카츄':a0_0xfae5a6(0x6ca),'ピカチュウ':a0_0xfae5a6(0x6ca),'라이츄':a0_0xfae5a6(0x51d),'ライチュウ':'Raichu','모래두지':a0_0xfae5a6(0x6c3)+'w','サンド':'Sandshre'+'w','고지':a0_0xfae5a6(0x2e4)+'h','サンドパン':a0_0xfae5a6(0x2e4)+'h','니드런♀':a0_0xfae5a6(0xbd),'ニドラン♀':a0_0xfae5a6(0xbd),'니드리나':a0_0xfae5a6(0x15b),'ニドリーナ':a0_0xfae5a6(0x15b),'니드퀸':a0_0xfae5a6(0x40b)+'n','ニドクイン':'Nidoquee'+'n','니드런♂':a0_0xfae5a6(0x328),'ニドラン♂':a0_0xfae5a6(0x328),'니드리노':a0_0xfae5a6(0x691),'ニドリーノ':a0_0xfae5a6(0x691),'니드킹':'Nidoking','ニドキング':a0_0xfae5a6(0x1e5),'삐삐':a0_0xfae5a6(0x45b),'ピッピ':a0_0xfae5a6(0x45b),'픽시':'Clefable','ピクシー':a0_0xfae5a6(0x2f7),'식스테일':a0_0xfae5a6(0x6b4),'ロコン':a0_0xfae5a6(0x6b4),'나인테일':a0_0xfae5a6(0x145)+'s','キュウコン':a0_0xfae5a6(0x145)+'s','푸린':a0_0xfae5a6(0x125)+'ff','プリン':a0_0xfae5a6(0x125)+'ff','푸크린':a0_0xfae5a6(0x366)+'ff','プクリン':a0_0xfae5a6(0x366)+'ff','주뱃':a0_0xfae5a6(0x193),'ズバット':'Zubat','골뱃':a0_0xfae5a6(0x124),'ゴルバット':'Golbat','뚜벅쵸':a0_0xfae5a6(0x69a),'ナゾノクサ':a0_0xfae5a6(0x69a),'냄새꼬':'Gloom','クサイハナ':a0_0xfae5a6(0x6ee),'라플레시아':a0_0xfae5a6(0x36f)+'e','ラフレシア':a0_0xfae5a6(0x36f)+'e','파라스':a0_0xfae5a6(0x17f),'パラス':a0_0xfae5a6(0x17f),'파라섹트':'Parasect','パラセクト':a0_0xfae5a6(0x46a),'콘팡':a0_0xfae5a6(0x248),'コンパン':a0_0xfae5a6(0x248),'도나리':a0_0xfae5a6(0x664),'モルフォン':a0_0xfae5a6(0x664),'디그다':a0_0xfae5a6(0x37c),'ディグダ':a0_0xfae5a6(0x37c),'닥트리오':a0_0xfae5a6(0x50a),'ダグトリオ':'Dugtrio','나옹':a0_0xfae5a6(0x4d2),'ニャース':a0_0xfae5a6(0x4d2),'페르시온':a0_0xfae5a6(0x475),'ペルシアン':a0_0xfae5a6(0x475),'고라파덕':a0_0xfae5a6(0x251),'コダック':a0_0xfae5a6(0x251),'골덕':'Golduck','ゴルダック':a0_0xfae5a6(0x26d),'망키':a0_0xfae5a6(0x56c),'マンキー':'Mankey','성원숭':'Primeape','オコリザル':a0_0xfae5a6(0x63f),'가디':a0_0xfae5a6(0x2b0)+'e','ガーディ':a0_0xfae5a6(0x2b0)+'e','윈디':a0_0xfae5a6(0xcf),'ウインディ':a0_0xfae5a6(0xcf),'발챙이':a0_0xfae5a6(0x4fe),'ニョロモ':a0_0xfae5a6(0x4fe),'슈륙챙이':a0_0xfae5a6(0x23c)+'l','ニョロゾ':a0_0xfae5a6(0x23c)+'l','강챙이':a0_0xfae5a6(0x56d)+'h','ニョロボン':a0_0xfae5a6(0x56d)+'h','캐이시':a0_0xfae5a6(0x50d),'ケーシィ':'Abra','윤겔라':a0_0xfae5a6(0x6f5),'ユンゲラー':a0_0xfae5a6(0x6f5),'후딘':a0_0xfae5a6(0x49d),'フーディン':a0_0xfae5a6(0x49d),'알통몬':a0_0xfae5a6(0x5d1),'ワンリキー':a0_0xfae5a6(0x5d1),'근육몬':a0_0xfae5a6(0x28f),'ゴーリキー':a0_0xfae5a6(0x28f),'괴력몬':a0_0xfae5a6(0x415),'カイリキー':'Machamp','모다피':a0_0xfae5a6(0x19b)+'ut','マダツボミ':a0_0xfae5a6(0x19b)+'ut','우츠동':a0_0xfae5a6(0x1fd)+'ll','ウツドン':a0_0xfae5a6(0x1fd)+'ll','우츠보트':a0_0xfae5a6(0x268)+'el','ウツボット':'Victreeb'+'el','왕눈해':a0_0xfae5a6(0x52d)+'l','メノクラゲ':a0_0xfae5a6(0x52d)+'l','독파리':'Tentacru'+'el','ドククラゲ':a0_0xfae5a6(0x3fc)+'el','꼬마돌':a0_0xfae5a6(0x5b4),'イシツブテ':'Geodude','데구리':'Graveler','ゴローン':a0_0xfae5a6(0x215),'딱구리':a0_0xfae5a6(0x53e),'ゴローニャ':'Golem','포니타':a0_0xfae5a6(0x4ae),'ポニータ':a0_0xfae5a6(0x4ae),'날쌩마':'Rapidash','ギャロップ':a0_0xfae5a6(0x303),'야돈':a0_0xfae5a6(0x5ed),'ヤドン':a0_0xfae5a6(0x5ed),'야도란':'Slowbro','ヤドラン':a0_0xfae5a6(0x630),'코일':a0_0xfae5a6(0x3bd)+'e','コイル':a0_0xfae5a6(0x3bd)+'e','레어코일':a0_0xfae5a6(0x266),'レアコイル':a0_0xfae5a6(0x266),'파오리':a0_0xfae5a6(0x1bb)+'\x27d','カモネギ':a0_0xfae5a6(0x1bb)+'\x27d','두두':a0_0xfae5a6(0x697),'ドードー':'Doduo','두트리오':'Dodrio','ドードリオ':a0_0xfae5a6(0x32c),'쥬쥬':a0_0xfae5a6(0x62c),'パウワウ':a0_0xfae5a6(0x62c),'쥬레곤':a0_0xfae5a6(0x200),'ジュゴン':a0_0xfae5a6(0x200),'질퍽이':'Grimer','ベトベター':a0_0xfae5a6(0x12e),'질뻐기':'Muk','ベトベトン':a0_0xfae5a6(0x6d0),'셀러':a0_0xfae5a6(0x6df),'シェルダー':a0_0xfae5a6(0x6df),'파르셀':a0_0xfae5a6(0x17b),'パルシェン':a0_0xfae5a6(0x17b),'고오스':a0_0xfae5a6(0xcd),'ゴース':'Gastly','고우스트':a0_0xfae5a6(0x6be),'ゴースト':a0_0xfae5a6(0x6be),'팬텀':a0_0xfae5a6(0x4b3),'ゲンガー':a0_0xfae5a6(0x4b3),'롱스톤':a0_0xfae5a6(0x24f),'イワーク':'Onix','슬리프':a0_0xfae5a6(0x665),'スリープ':a0_0xfae5a6(0x665),'슬리퍼':a0_0xfae5a6(0x16e),'スリーパー':a0_0xfae5a6(0x16e),'크랩':a0_0xfae5a6(0x611),'クラブ':a0_0xfae5a6(0x611),'킹크랩':a0_0xfae5a6(0x24a),'キングラー':a0_0xfae5a6(0x24a),'찌리리공':'Voltorb','ビリリダマ':'Voltorb','붐볼':a0_0xfae5a6(0x229)+'e','マルマイン':a0_0xfae5a6(0x229)+'e','아라리':a0_0xfae5a6(0x3ff)+'e','タマタマ':a0_0xfae5a6(0x3ff)+'e','나시':a0_0xfae5a6(0x1b1)+'r','ナッシー':a0_0xfae5a6(0x1b1)+'r','탕구리':'Cubone','カラカラ':a0_0xfae5a6(0x425),'텅구리':a0_0xfae5a6(0x1cb),'ガラガラ':a0_0xfae5a6(0x1cb),'시라소몬':a0_0xfae5a6(0x2f5)+'e','サワムラー':a0_0xfae5a6(0x2f5)+'e','홍수몬':a0_0xfae5a6(0x57a)+'an','エビワラー':a0_0xfae5a6(0x57a)+'an','내루미':a0_0xfae5a6(0x443)+'g','ベロリンガ':a0_0xfae5a6(0x443)+'g','또가스':a0_0xfae5a6(0x474),'ドガース':a0_0xfae5a6(0x474),'또도가스':a0_0xfae5a6(0x514),'マタドガス':a0_0xfae5a6(0x514),'뿔카노':a0_0xfae5a6(0x6c6),'サイホーン':'Rhyhorn','코뿌리':a0_0xfae5a6(0x1ea),'サイドン':a0_0xfae5a6(0x1ea),'럭키':'Chansey','ラッキー':a0_0xfae5a6(0x6d2),'덩쿠리':a0_0xfae5a6(0x141),'モンジャラ':a0_0xfae5a6(0x141),'캥카':a0_0xfae5a6(0x10b)+'an','ガルーラ':'Kangaskh'+'an','쏘드라':a0_0xfae5a6(0x548),'タッツー':a0_0xfae5a6(0x548),'시드라':a0_0xfae5a6(0x6a5),'シードラ':a0_0xfae5a6(0x6a5),'콘치':'Goldeen','トサキント':a0_0xfae5a6(0x10e),'왕콘치':a0_0xfae5a6(0x6f2),'アズマオウ':'Seaking','별가사리':a0_0xfae5a6(0x4e6),'ヒトデマン':'Staryu','아쿠스타':a0_0xfae5a6(0x2aa),'スターミー':a0_0xfae5a6(0x2aa),'마임맨':a0_0xfae5a6(0x682),'バリヤード':a0_0xfae5a6(0x682),'스라크':a0_0xfae5a6(0x131),'ストライク':a0_0xfae5a6(0x131),'루주라':a0_0xfae5a6(0x23d),'ルージュラ':'Jynx','에레브':a0_0xfae5a6(0x462)+'zz','エレブー':'Electabu'+'zz','마그마':a0_0xfae5a6(0x285),'ブーバー':'Magmar','쁘사이저':a0_0xfae5a6(0x331),'カイロス':a0_0xfae5a6(0x331),'켄타로스':'Tauros','ケンタロス':a0_0xfae5a6(0x33b),'잉어킹':a0_0xfae5a6(0xe4),'コイキング':'Magikarp','갸라도스':a0_0xfae5a6(0x62a),'ギャラドス':a0_0xfae5a6(0x62a),'라프라스':'Lapras','ラプラス':a0_0xfae5a6(0x581),'메타몽':'Ditto','メタモン':a0_0xfae5a6(0xf3),'이브이':a0_0xfae5a6(0x493),'イーブイ':a0_0xfae5a6(0x493),'샤미드':a0_0xfae5a6(0x4cd),'シャワーズ':'Vaporeon','쥬피썬더':a0_0xfae5a6(0x6a0),'サンダース':a0_0xfae5a6(0x6a0),'부스터':a0_0xfae5a6(0x4d5),'ブースター':'Flareon','폴리곤':'Porygon','ポリゴン':a0_0xfae5a6(0x42b),'암나이트':a0_0xfae5a6(0x447),'オムナイト':a0_0xfae5a6(0x447),'암스타':a0_0xfae5a6(0x2fe),'オムスター':a0_0xfae5a6(0x2fe),'투구':'Kabuto','カブト':'Kabuto','투구푸스':a0_0xfae5a6(0x341),'カブトプス':a0_0xfae5a6(0x341),'프테라':a0_0xfae5a6(0x6a2)+'yl','プテラ':'Aerodact'+'yl','잠만보':a0_0xfae5a6(0x372),'カビゴン':a0_0xfae5a6(0x372),'프리져':a0_0xfae5a6(0x6e3),'フリーザー':a0_0xfae5a6(0x6e3),'썬더':'Zapdos','サンダー':'Zapdos','파이어':a0_0xfae5a6(0x218),'ファイヤー':a0_0xfae5a6(0x218),'미뇽':'Dratini','ミニリュウ':a0_0xfae5a6(0xe9),'신뇽':a0_0xfae5a6(0x535)+'r','ハクリュー':'Dragonai'+'r','망나뇽':'Dragonit'+'e','カイリュー':a0_0xfae5a6(0x1c5)+'e','뮤츠':a0_0xfae5a6(0x4a6),'ミュウツー':a0_0xfae5a6(0x4a6),'뮤':a0_0xfae5a6(0x1b4),'ミュウ':'Mew','치코리타':a0_0xfae5a6(0x4d4)+'a','チコリータ':a0_0xfae5a6(0x4d4)+'a','베이리프':'Bayleef','ベイリーフ':a0_0xfae5a6(0x64d),'메가니움':a0_0xfae5a6(0x3ca),'メガニウム':'Meganium','브케인':a0_0xfae5a6(0x5ea)+'l','ヒノアラシ':a0_0xfae5a6(0x5ea)+'l','마그케인':a0_0xfae5a6(0x223),'マグマラシ':a0_0xfae5a6(0x223),'블레이범':a0_0xfae5a6(0x4c5)+'on','バクフーン':'Typhlosi'+'on','리아코':a0_0xfae5a6(0x1fe),'ワニノコ':a0_0xfae5a6(0x1fe),'엘리게이':a0_0xfae5a6(0x562),'アリゲイツ':a0_0xfae5a6(0x562),'장크로다일':a0_0xfae5a6(0x480)+'tr','オーダイル':a0_0xfae5a6(0x480)+'tr','꼬리선':a0_0xfae5a6(0x516),'オタチ':'Sentret','다꼬리':'Furret','オオタチ':a0_0xfae5a6(0x201),'부우부':a0_0xfae5a6(0x4d0),'ホーホー':a0_0xfae5a6(0x4d0),'야부엉':a0_0xfae5a6(0x39c),'ヨルノズク':a0_0xfae5a6(0x39c),'레디바':a0_0xfae5a6(0x2b5),'レディバ':a0_0xfae5a6(0x2b5),'레디안':a0_0xfae5a6(0x1bd),'レディアン':a0_0xfae5a6(0x1bd),'페이검':a0_0xfae5a6(0x48f),'イトマル':a0_0xfae5a6(0x48f),'아리아도스':a0_0xfae5a6(0x4a2),'アリアドス':a0_0xfae5a6(0x4a2),'크로뱃':'Crobat','クロバット':a0_0xfae5a6(0x227),'초라기':'Chinchou','チョンチー':'Chinchou','랜턴':a0_0xfae5a6(0x3d1),'ランターン':'Lanturn','피츄':a0_0xfae5a6(0x5e6),'ピチュー':a0_0xfae5a6(0x5e6),'삐':'Cleffa','ピィ':a0_0xfae5a6(0x5a0),'푸푸린':'Igglybuf'+'f','ププリン':a0_0xfae5a6(0x5d8)+'f','토게피':a0_0xfae5a6(0x3ad),'トゲピー':a0_0xfae5a6(0x3ad),'토게틱':a0_0xfae5a6(0x397),'トゲチック':'Togetic','네이티':a0_0xfae5a6(0x11f),'ネイティ':'Natu','네이티오':'Xatu','ネイティオ':a0_0xfae5a6(0x15f),'메리프':a0_0xfae5a6(0x116),'メリープ':a0_0xfae5a6(0x116),'보송송':a0_0xfae5a6(0x5a1),'モココ':a0_0xfae5a6(0x5a1),'전룡':'Ampharos','デンリュウ':a0_0xfae5a6(0x456),'아르코':a0_0xfae5a6(0xe1)+'m','キレイハナ':a0_0xfae5a6(0xe1)+'m','마릴':'Marill','マリル':a0_0xfae5a6(0x650),'마릴리':'Azumaril'+'l','マリルリ':a0_0xfae5a6(0x4c9)+'l','꼬지모':a0_0xfae5a6(0xeb)+'o','ウソッキー':'Sudowood'+'o','왕구리':a0_0xfae5a6(0x252),'ニョロトノ':a0_0xfae5a6(0x252),'통통코':a0_0xfae5a6(0x3a3),'ハネッコ':a0_0xfae5a6(0x3a3),'두코':'Skiploom','ポポッコ':a0_0xfae5a6(0x1ec),'솜솜코':a0_0xfae5a6(0x644),'ワタッコ':a0_0xfae5a6(0x644),'에이팜':'Aipom','エイパム':a0_0xfae5a6(0x1b2),'해너츠':'Sunkern','ヒマナッツ':a0_0xfae5a6(0xed),'해루미':a0_0xfae5a6(0x4dd),'キマワリ':'Sunflora','왕자리':a0_0xfae5a6(0x4fd),'ヤンヤンマ':a0_0xfae5a6(0x4fd),'우파':a0_0xfae5a6(0x2ca),'ウパー':a0_0xfae5a6(0x2ca),'누오':a0_0xfae5a6(0x3a6),'ヌオー':a0_0xfae5a6(0x3a6),'에브이':'Espeon','エーフィ':'Espeon','블래키':a0_0xfae5a6(0x539),'ブラッキー':'Umbreon','니로우':a0_0xfae5a6(0x5a3),'ヤミカラス':a0_0xfae5a6(0x5a3),'야도킹':a0_0xfae5a6(0x319),'ヤドキング':a0_0xfae5a6(0x319),'무우마':'Misdreav'+'us','ムウマ':'Misdreav'+'us','안농':a0_0xfae5a6(0x49e),'アンノーン':'Unown','마자용':a0_0xfae5a6(0x513)+'t','ソーナンス':a0_0xfae5a6(0x513)+'t','키링키':a0_0xfae5a6(0x44f)+'g','キリンリキ':'Girafari'+'g','피콘':'Pineco','クヌギダマ':a0_0xfae5a6(0xc9),'쏘콘':'Forretre'+'ss','フォレトス':'Forretre'+'ss','노고치':a0_0xfae5a6(0x641)+'e','ノコッチ':a0_0xfae5a6(0x641)+'e','글라이거':'Gligar','グライガー':a0_0xfae5a6(0x569),'강철톤':a0_0xfae5a6(0x681),'ハガネール':'Steelix','블루':'Snubbull','ブルー':a0_0xfae5a6(0x5e7),'그랑블루':'Granbull','グランブル':a0_0xfae5a6(0x244),'침바루':a0_0xfae5a6(0x355),'ハリーセン':a0_0xfae5a6(0x355),'핫삼':'Scizor','ハッサム':a0_0xfae5a6(0x5e9),'단단지':a0_0xfae5a6(0x638),'ツボツボ':a0_0xfae5a6(0x638),'헤라크로스':a0_0xfae5a6(0x301)+'s','ヘラクロス':a0_0xfae5a6(0x301)+'s','포푸니':a0_0xfae5a6(0x3aa),'ニューラ':a0_0xfae5a6(0x3aa),'깜지곰':'Teddiurs'+'a','ヒメグマ':a0_0xfae5a6(0x47a)+'a','링곰':a0_0xfae5a6(0x126),'リングマ':'Ursaring','마그마그':a0_0xfae5a6(0x5f8),'マグマッグ':a0_0xfae5a6(0x5f8),'마그카르고':a0_0xfae5a6(0x272),'マグカルゴ':'Magcargo','꾸꾸리':'Swinub','ウリムー':'Swinub','메꾸리':a0_0xfae5a6(0x2e1)+'e','イノムー':a0_0xfae5a6(0x2e1)+'e','코산호':a0_0xfae5a6(0x277),'サニーゴ':a0_0xfae5a6(0x277),'총어':a0_0xfae5a6(0x4d1),'テッポウオ':a0_0xfae5a6(0x4d1),'대포무노':a0_0xfae5a6(0x286)+'y','オクタン':a0_0xfae5a6(0x286)+'y','딜리버드':a0_0xfae5a6(0x63e),'デリバード':'Delibird','만타인':'Mantine','マンタイン':'Mantine','무장조':'Skarmory','エアームド':'Skarmory','델빌':a0_0xfae5a6(0x357),'デルビル':a0_0xfae5a6(0x357),'헬가':a0_0xfae5a6(0x332),'ヘルガー':a0_0xfae5a6(0x332),'킹드라':a0_0xfae5a6(0x256),'キングドラ':a0_0xfae5a6(0x256),'코코리':'Phanpy','ゴマゾウ':a0_0xfae5a6(0x5da),'코리갑':a0_0xfae5a6(0xf1),'ドンファン':'Donphan','폴리곤2':a0_0xfae5a6(0x6c1),'ポリゴン２':'Porygon2','노라키':a0_0xfae5a6(0x4b2),'オドシシ':'Stantler','루브도':'Smeargle','ドーブル':a0_0xfae5a6(0x3b3),'배루키':'Tyrogue','バルキー':a0_0xfae5a6(0x603),'카포에라':a0_0xfae5a6(0x22e)+'p','カポエラー':a0_0xfae5a6(0x22e)+'p','뽀뽀라':a0_0xfae5a6(0x56b),'ムチュール':'Smoochum','에레키드':a0_0xfae5a6(0x2ef),'エレキッド':a0_0xfae5a6(0x2ef),'마그비':'Magby','ブビィ':'Magby','밀탱크':'Miltank','ミルタンク':'Miltank','해피너스':'Blissey','ハピナス':a0_0xfae5a6(0x428),'라이코':a0_0xfae5a6(0x5eb),'ライコウ':a0_0xfae5a6(0x5eb),'앤테이':a0_0xfae5a6(0x2f9),'エンテイ':a0_0xfae5a6(0x2f9),'스이쿤':a0_0xfae5a6(0x5e8),'スイクン':'Suicune','애버라스':'Larvitar','ヨーギラス':a0_0xfae5a6(0x5dc),'데기라스':a0_0xfae5a6(0x53d),'サナギラス':a0_0xfae5a6(0x53d),'마기라스':a0_0xfae5a6(0x65e)+'r','バンギラス':a0_0xfae5a6(0x65e)+'r','루기아':'Lugia','ルギア':a0_0xfae5a6(0x4f3),'칠색조':'Ho-Oh','ホウオウ':a0_0xfae5a6(0x3a0),'세레비':'Celebi','セレビィ':a0_0xfae5a6(0x600),'나무지기':'Treecko','キモリ':a0_0xfae5a6(0x6e4),'나무돌이':a0_0xfae5a6(0x482),'ジュプトル':a0_0xfae5a6(0x482),'나무킹':a0_0xfae5a6(0x1be),'ジュカイン':'Sceptile','아차모':a0_0xfae5a6(0x4e5),'アチャモ':'Torchic','영치코':'Combuske'+'n','ワカシャモ':'Combuske'+'n','번치코':a0_0xfae5a6(0x381),'バシャーモ':a0_0xfae5a6(0x381),'물짱이':'Mudkip','ミズゴロウ':a0_0xfae5a6(0x499),'늪짱이':'Marshtom'+'p','ヌマクロー':'Marshtom'+'p','대짱이':a0_0xfae5a6(0x1ef),'ラグラージ':a0_0xfae5a6(0x1ef),'포챠나':a0_0xfae5a6(0x2bd)+'a','ポチエナ':a0_0xfae5a6(0x2bd)+'a','그라에나':a0_0xfae5a6(0x57c)+'a','グラエナ':a0_0xfae5a6(0x57c)+'a','지그제구리':a0_0xfae5a6(0x34e)+'n','ジグザグマ':a0_0xfae5a6(0x34e)+'n','직구리':a0_0xfae5a6(0x2bc),'マッスグマ':'Linoone','개무소':a0_0xfae5a6(0x5a9),'ケムッソ':a0_0xfae5a6(0x5a9),'실쿤':a0_0xfae5a6(0x22c),'カラサリス':a0_0xfae5a6(0x22c),'뷰티플라이':a0_0xfae5a6(0x32a)+'y','アゲハント':a0_0xfae5a6(0x32a)+'y','카스쿤':'Cascoon','マユルド':a0_0xfae5a6(0x105),'독케일':a0_0xfae5a6(0x2bf),'ドクケイル':a0_0xfae5a6(0x2bf),'연꽃몬':a0_0xfae5a6(0x530),'ハスボー':a0_0xfae5a6(0x530),'로토스':'Lombre','ハスブレロ':a0_0xfae5a6(0x5d4),'로파파':a0_0xfae5a6(0x58e),'ルンパッパ':a0_0xfae5a6(0x58e),'도토링':a0_0xfae5a6(0x2c5),'タネボー':a0_0xfae5a6(0x2c5),'잎새코':a0_0xfae5a6(0x690),'コノハナ':a0_0xfae5a6(0x690),'다탱구':a0_0xfae5a6(0x19d),'ダーテング':a0_0xfae5a6(0x19d),'테일로':a0_0xfae5a6(0x1bf),'スバメ':'Taillow','스왈로':a0_0xfae5a6(0x5fe),'オオスバメ':a0_0xfae5a6(0x5fe),'갈모매':a0_0xfae5a6(0x4c3),'キャモメ':a0_0xfae5a6(0x4c3),'패리퍼':a0_0xfae5a6(0x452),'ペリッパー':a0_0xfae5a6(0x452),'랄토스':'Ralts','ラルトス':a0_0xfae5a6(0x206),'킬리아':'Kirlia','キルリア':a0_0xfae5a6(0x663),'가디안':a0_0xfae5a6(0x66f)+'r','サーナイト':a0_0xfae5a6(0x66f)+'r','비구술':'Surskit','アメタマ':'Surskit','비나방':a0_0xfae5a6(0x59a)+'in','アメモース':a0_0xfae5a6(0x59a)+'in','버섯꼬':a0_0xfae5a6(0x62d)+'h','キノココ':a0_0xfae5a6(0x62d)+'h','버섯모':a0_0xfae5a6(0x21e),'キノガッサ':a0_0xfae5a6(0x21e),'게을로':a0_0xfae5a6(0x1a8),'ナマケロ':a0_0xfae5a6(0x1a8),'발바로':a0_0xfae5a6(0x3e7),'ヤルキモノ':a0_0xfae5a6(0x3e7),'게을킹':a0_0xfae5a6(0x4ba),'ケッキング':a0_0xfae5a6(0x4ba),'토중몬':a0_0xfae5a6(0x440),'ツチニン':a0_0xfae5a6(0x440),'아이스크':a0_0xfae5a6(0x5c1),'テッカニン':a0_0xfae5a6(0x5c1),'껍질몬':a0_0xfae5a6(0x367),'ヌケニン':a0_0xfae5a6(0x367),'소곤룡':a0_0xfae5a6(0x20a),'ゴニョニョ':a0_0xfae5a6(0x20a),'노공룡':'Loudred','ドゴーム':'Loudred','폭음룡':a0_0xfae5a6(0x3e2),'バクオング':'Exploud','마크탕':a0_0xfae5a6(0x43d),'マクノシタ':a0_0xfae5a6(0x43d),'하리뭉':'Hariyama','ハリテヤマ':'Hariyama','루리리':a0_0xfae5a6(0x455),'ルリリ':a0_0xfae5a6(0x455),'코코파스':a0_0xfae5a6(0x5d5),'ノズパス':a0_0xfae5a6(0x5d5),'에나비':a0_0xfae5a6(0x522),'エネコ':a0_0xfae5a6(0x522),'델케티':'Delcatty','エネコロロ':a0_0xfae5a6(0x5de),'깜까미':'Sableye','ヤミラミ':a0_0xfae5a6(0x4e9),'입치트':a0_0xfae5a6(0x323),'クチート':a0_0xfae5a6(0x323),'가보리':a0_0xfae5a6(0x40c),'ココドラ':a0_0xfae5a6(0x40c),'갱도라':'Lairon','コドラ':a0_0xfae5a6(0x170),'보스로라':a0_0xfae5a6(0x58a),'ボスゴドラ':a0_0xfae5a6(0x58a),'요가랑':a0_0xfae5a6(0x205),'アサナン':a0_0xfae5a6(0x205),'요가램':'Medicham','チャーレム':'Medicham','썬더라이':a0_0xfae5a6(0x483)+'e','ラクライ':a0_0xfae5a6(0x483)+'e','썬더볼트':a0_0xfae5a6(0x21a)+'c','ライボルト':a0_0xfae5a6(0x21a)+'c','플러시':a0_0xfae5a6(0x30a),'プラスル':a0_0xfae5a6(0x30a),'마이농':'Minun','マイナン':a0_0xfae5a6(0x6c9),'볼비트':'Volbeat','バルビート':'Volbeat','네오비트':'Illumise','イルミーゼ':a0_0xfae5a6(0x4ef),'로젤리아':a0_0xfae5a6(0x4bb),'ロゼリア':a0_0xfae5a6(0x4bb),'꼴깍몬':a0_0xfae5a6(0xbb),'ゴクリン':a0_0xfae5a6(0xbb),'꿀꺽몬':'Swalot','マルノーム':a0_0xfae5a6(0x486),'샤프니아':'Carvanha','キバニア':a0_0xfae5a6(0x121),'샤크니아':a0_0xfae5a6(0x16c),'サメハダー':'Sharpedo','고래왕자':a0_0xfae5a6(0x236),'ホエルコ':a0_0xfae5a6(0x236),'고래왕':a0_0xfae5a6(0x1d4),'ホエルオー':a0_0xfae5a6(0x1d4),'둔타':'Numel','ドンメル':a0_0xfae5a6(0x11c),'폭타':a0_0xfae5a6(0x3b8),'バクーダ':a0_0xfae5a6(0x3b8),'코터스':a0_0xfae5a6(0x109),'コータス':a0_0xfae5a6(0x109),'피그점프':'Spoink','バネブー':a0_0xfae5a6(0x103),'피그킹':a0_0xfae5a6(0x61e),'ブーピッグ':'Grumpig','얼루기':a0_0xfae5a6(0x282),'パッチール':a0_0xfae5a6(0x282),'톱치':a0_0xfae5a6(0x219),'ナックラー':a0_0xfae5a6(0x219),'비브라바':a0_0xfae5a6(0x5c8),'ビブラーバ':a0_0xfae5a6(0x5c8),'플라이곤':a0_0xfae5a6(0x42e),'フライゴン':a0_0xfae5a6(0x42e),'선인왕':a0_0xfae5a6(0x1cf),'サボネア':a0_0xfae5a6(0x1cf),'밤선인':'Cacturne','ノクタス':a0_0xfae5a6(0x3d0),'파비코':a0_0xfae5a6(0x454),'チルット':'Swablu','파비코리':a0_0xfae5a6(0x43e),'チルタリス':a0_0xfae5a6(0x43e),'쟝고':a0_0xfae5a6(0xe7),'ザングース':a0_0xfae5a6(0xe7),'세비퍼':a0_0xfae5a6(0x549),'ハブネーク':a0_0xfae5a6(0x549),'루나톤':a0_0xfae5a6(0x506),'ルナトーン':a0_0xfae5a6(0x506),'솔록':'Solrock','ソルロック':'Solrock','미꾸리':a0_0xfae5a6(0x48b),'ドジョッチ':a0_0xfae5a6(0x48b),'메깅':a0_0xfae5a6(0x645),'ナマズン':'Whiscash','가재군':'Corphish','ヘイガニ':a0_0xfae5a6(0x542),'가재장군':a0_0xfae5a6(0x56e)+'t','シザリガー':a0_0xfae5a6(0x56e)+'t','오뚝군':'Baltoy','ヤジロン':'Baltoy','점토도리':a0_0xfae5a6(0x274),'ネンドール':a0_0xfae5a6(0x274),'릴링':a0_0xfae5a6(0x5ab),'リリーラ':a0_0xfae5a6(0x5ab),'릴리요':a0_0xfae5a6(0x4bd),'ユレイドル':a0_0xfae5a6(0x4bd),'아노딥스':'Anorith','アノプス':a0_0xfae5a6(0xe5),'아말도':a0_0xfae5a6(0x363),'アーマルド':'Armaldo','빈티나':a0_0xfae5a6(0x45d),'ヒンバス':a0_0xfae5a6(0x45d),'밀로틱':a0_0xfae5a6(0x373),'ミロカロス':a0_0xfae5a6(0x373),'캐스퐁':a0_0xfae5a6(0x4c6),'ポワルン':a0_0xfae5a6(0x4c6),'켈리몬':'Kecleon','カクレオン':a0_0xfae5a6(0x2b7),'어둠대신':a0_0xfae5a6(0x1db),'カゲボウズ':a0_0xfae5a6(0x1db),'다크펫':a0_0xfae5a6(0x668),'ジュペッタ':a0_0xfae5a6(0x668),'해골몽':a0_0xfae5a6(0x574),'ヨマワル':a0_0xfae5a6(0x574),'미라몽':a0_0xfae5a6(0x511),'サマヨール':'Dusclops','트로피우스':a0_0xfae5a6(0x507),'トロピウス':a0_0xfae5a6(0x507),'치렁':a0_0xfae5a6(0x35e),'チリーン':a0_0xfae5a6(0x35e),'앱솔':a0_0xfae5a6(0xfc),'アブソル':a0_0xfae5a6(0xfc),'마자':a0_0xfae5a6(0x4e2),'ソーナノ':a0_0xfae5a6(0x4e2),'눈꼬마':a0_0xfae5a6(0x25e),'ユキワラシ':a0_0xfae5a6(0x25e),'얼음귀신':a0_0xfae5a6(0x29d),'オニゴーリ':a0_0xfae5a6(0x29d),'대굴레오':a0_0xfae5a6(0x2c9),'タマザラシ':'Spheal','씨레오':a0_0xfae5a6(0xd3),'トドグラー':'Sealeo','씨카이저':'Walrein','トドゼルガ':'Walrein','진주몽':'Clamperl','パールル':a0_0xfae5a6(0x26b),'헌테일':'Huntail','ハンテール':a0_0xfae5a6(0x234),'분홍장이':a0_0xfae5a6(0x4b8),'サクラビス':a0_0xfae5a6(0x4b8),'시라칸':'Relicant'+'h','ジーランス':'Relicant'+'h','사랑동이':a0_0xfae5a6(0x197),'ラブカス':a0_0xfae5a6(0x197),'아공이':a0_0xfae5a6(0x579),'タツベイ':a0_0xfae5a6(0x579),'쉘곤':'Shelgon','コモルー':'Shelgon','보만다':a0_0xfae5a6(0x403)+'e','ボーマンダ':a0_0xfae5a6(0x403)+'e','메탕':a0_0xfae5a6(0x3cf),'ダンバル':a0_0xfae5a6(0x3cf),'메탕구':'Metang','メタング':a0_0xfae5a6(0x6c2),'메타그로스':a0_0xfae5a6(0x42f)+'s','メタグロス':a0_0xfae5a6(0x42f)+'s','레지락':a0_0xfae5a6(0x36b),'レジロック':a0_0xfae5a6(0x36b),'레지아이스':a0_0xfae5a6(0x2ae),'レジアイス':a0_0xfae5a6(0x2ae),'레지스틸':a0_0xfae5a6(0x3a7)+'l','レジスチル':a0_0xfae5a6(0x3a7)+'l','라티아스':a0_0xfae5a6(0x4a4),'ラティアス':'Latias','라티오스':'Latios','ラティオス':a0_0xfae5a6(0x2e8),'가이오가':a0_0xfae5a6(0x46f),'カイオーガ':a0_0xfae5a6(0x46f),'그란돈':a0_0xfae5a6(0x2da),'グラードン':'Groudon','레쿠쟈':a0_0xfae5a6(0x2d1),'レックウザ':a0_0xfae5a6(0x2d1),'지라치':a0_0xfae5a6(0x633),'ジラーチ':a0_0xfae5a6(0x633),'테오키스':a0_0xfae5a6(0x20f),'デオキシス':a0_0xfae5a6(0x20f),'모부기':a0_0xfae5a6(0x44d),'ナエトル':a0_0xfae5a6(0x44d),'수풀부기':a0_0xfae5a6(0x2a1),'ハヤシガメ':a0_0xfae5a6(0x2a1),'토대부기':a0_0xfae5a6(0x1cd),'ドダイトス':a0_0xfae5a6(0x1cd),'불꽃숭이':a0_0xfae5a6(0x3d8),'ヒコザル':'Chimchar','파이숭이':a0_0xfae5a6(0x508),'モウカザル':'Monferno','초염몽':a0_0xfae5a6(0x1c6)+'e','ゴウカザル':a0_0xfae5a6(0x1c6)+'e','팽도리':a0_0xfae5a6(0x182),'ポッチャマ':a0_0xfae5a6(0x182),'팽태자':a0_0xfae5a6(0x1e8),'ポッタイシ':'Prinplup','엠페르트':a0_0xfae5a6(0x351),'エンペルト':a0_0xfae5a6(0x351),'찌르꼬':a0_0xfae5a6(0x501),'ムックル':a0_0xfae5a6(0x501),'찌르버드':a0_0xfae5a6(0x4d3),'ムクバード':a0_0xfae5a6(0x4d3),'찌르호크':a0_0xfae5a6(0x4d7)+'r','ムクホーク':a0_0xfae5a6(0x4d7)+'r','비버니':a0_0xfae5a6(0x504),'ビッパ':a0_0xfae5a6(0x504),'비버통':a0_0xfae5a6(0x6e5),'ビーダル':a0_0xfae5a6(0x6e5),'귀뚤뚜기':a0_0xfae5a6(0x304)+'t','コロボーシ':'Kricketo'+'t','귀뚤톡크':a0_0xfae5a6(0x3dd)+'ne','コロトック':a0_0xfae5a6(0x3dd)+'ne','꼬링크':a0_0xfae5a6(0x344),'コリンク':a0_0xfae5a6(0x344),'럭시오':'Luxio','ルクシオ':a0_0xfae5a6(0x57d),'렌트라':a0_0xfae5a6(0x186),'レントラー':a0_0xfae5a6(0x186),'꼬몽울':a0_0xfae5a6(0x306),'スボミー':a0_0xfae5a6(0x306),'로즈레이드':a0_0xfae5a6(0x61a),'ロズレイド':a0_0xfae5a6(0x61a),'두개도스':a0_0xfae5a6(0x414),'ズガイドス':a0_0xfae5a6(0x414),'램펄드':a0_0xfae5a6(0x446)+'s','ラムパルド':a0_0xfae5a6(0x446)+'s','방패톱스':a0_0xfae5a6(0x632),'タテトプス':a0_0xfae5a6(0x632),'바리톱스':a0_0xfae5a6(0x64e)+'n','トリデプス':'Bastiodo'+'n','도롱충이':a0_0xfae5a6(0x34b),'ミノムッチ':'Burmy','도롱마담':a0_0xfae5a6(0x142),'ミノマダム':a0_0xfae5a6(0x142),'나메일':a0_0xfae5a6(0x189),'ガーメイル':a0_0xfae5a6(0x189),'세꿀버리':a0_0xfae5a6(0x419),'ミツハニー':a0_0xfae5a6(0x419),'비퀸':'Vespique'+'n','ビークイン':a0_0xfae5a6(0x631)+'n','파치리스':'Pachiris'+'u','パチリス':'Pachiris'+'u','브이젤':a0_0xfae5a6(0x33f),'ブイゼル':a0_0xfae5a6(0x33f),'플로젤':a0_0xfae5a6(0x174),'フローゼル':'Floatzel','체리버':'Cherubi','チェリンボ':a0_0xfae5a6(0x41b),'체리꼬':a0_0xfae5a6(0x3db),'チェリム':'Cherrim','깝질무':a0_0xfae5a6(0xf6),'カラナクシ':a0_0xfae5a6(0xf6),'트리토돈':'Gastrodo'+'n','トリトドン':a0_0xfae5a6(0x54d)+'n','겟핸보숭':a0_0xfae5a6(0x1f8),'エテボース':'Ambipom','흔들풍손':a0_0xfae5a6(0x41a),'フワンテ':a0_0xfae5a6(0x41a),'둥실라이드':a0_0xfae5a6(0x4e4),'フワライド':a0_0xfae5a6(0x4e4),'이어롤':'Buneary','ミミロル':a0_0xfae5a6(0x27f),'이어롭':a0_0xfae5a6(0x573),'ミミロップ':a0_0xfae5a6(0x573),'무우마직':a0_0xfae5a6(0x4e3)+'s','ムウマージ':a0_0xfae5a6(0x4e3)+'s','돈크로우':'Honchkro'+'w','ドンカラス':'Honchkro'+'w','나옹마':'Glameow','ニャルマー':a0_0xfae5a6(0x22a),'몬냥이':a0_0xfae5a6(0x5cf),'ブニャット':a0_0xfae5a6(0x5cf),'랑딸랑':a0_0xfae5a6(0x2cf)+'g','リーシャン':a0_0xfae5a6(0x2cf)+'g','스컹뿡':a0_0xfae5a6(0x147),'スカンプー':a0_0xfae5a6(0x147),'스컹탱크':'Skuntank','スカタンク':a0_0xfae5a6(0x637),'동미러':a0_0xfae5a6(0x607),'ドーミラー':'Bronzor','동탁군':a0_0xfae5a6(0x55f),'ドータクン':a0_0xfae5a6(0x55f),'꼬지지':a0_0xfae5a6(0x6b5),'ウソハチ':a0_0xfae5a6(0x6b5),'흉내내':a0_0xfae5a6(0x66c),'マネネ':a0_0xfae5a6(0x66c),'핑복':a0_0xfae5a6(0x2ee),'ピンプク':a0_0xfae5a6(0x2ee),'페라페':a0_0xfae5a6(0x38d),'ペラップ':'Chatot','화강돌':a0_0xfae5a6(0x6c4)+'b','ミカルゲ':a0_0xfae5a6(0x6c4)+'b','딥상어동':a0_0xfae5a6(0xd5),'フカマル':a0_0xfae5a6(0xd5),'한바이트':'Gabite','ガバイト':'Gabite','한카리아스':a0_0xfae5a6(0x185),'ガブリアス':'Garchomp','먹고자':'Munchlax','ゴンベ':a0_0xfae5a6(0x29b),'리오르':a0_0xfae5a6(0x1de),'リオル':a0_0xfae5a6(0x1de),'루카리오':a0_0xfae5a6(0x63d),'ルカリオ':a0_0xfae5a6(0x63d),'히포포타스':a0_0xfae5a6(0x624)+'as','ヒポポタス':a0_0xfae5a6(0x624)+'as','하마돈':a0_0xfae5a6(0x6b9)+'n','カバルドン':a0_0xfae5a6(0x6b9)+'n','스콜피':a0_0xfae5a6(0x6bd),'スコルピ':a0_0xfae5a6(0x6bd),'드래피온':a0_0xfae5a6(0x404),'ドラピオン':a0_0xfae5a6(0x404),'삐딱구리':a0_0xfae5a6(0x561),'グレッグル':a0_0xfae5a6(0x561),'독개굴':a0_0xfae5a6(0x3a8)+'k','ドクロッグ':a0_0xfae5a6(0x3a8)+'k','무스틈니':'Carnivin'+'e','マスキッパ':'Carnivin'+'e','형광어':a0_0xfae5a6(0x265),'ケイコウオ':'Finneon','네오라이트':a0_0xfae5a6(0x48a),'ネオラント':a0_0xfae5a6(0x48a),'타만타':a0_0xfae5a6(0x2e3),'タマンタ':a0_0xfae5a6(0x2e3),'눈쓰개':a0_0xfae5a6(0x679),'ユキカブリ':a0_0xfae5a6(0x679),'눈설왕':a0_0xfae5a6(0x492)+'w','ユキノオー':'Abomasno'+'w','포푸니라':'Weavile','マニューラ':a0_0xfae5a6(0x13c),'자포코일':'Magnezon'+'e','ジバコイル':a0_0xfae5a6(0x49f)+'e','내룸벨트':'Lickilic'+'ky','ベロベルト':a0_0xfae5a6(0x5a2)+'ky','거대코뿌리':a0_0xfae5a6(0x592)+'r','ドサイドン':a0_0xfae5a6(0x592)+'r','덩쿠림보':a0_0xfae5a6(0x544)+'h','モジャンボ':a0_0xfae5a6(0x544)+'h','에레키블':a0_0xfae5a6(0x15d)+'re','エレキブル':a0_0xfae5a6(0x15d)+'re','마그마번':a0_0xfae5a6(0x376)+'r','ブーバーン':a0_0xfae5a6(0x376)+'r','토게키스':'Togekiss','トゲキッス':a0_0xfae5a6(0x61c),'메가자리':a0_0xfae5a6(0x3ac),'メガヤンマ':'Yanmega','리피아':a0_0xfae5a6(0x2a2),'リーフィア':a0_0xfae5a6(0x2a2),'글레이시아':a0_0xfae5a6(0x464),'グレイシア':a0_0xfae5a6(0x464),'글라이온':a0_0xfae5a6(0x269),'グライオン':'Gliscor','맘모꾸리':'Mamoswin'+'e','マンムー':a0_0xfae5a6(0x63b)+'e','폴리곤Z':'Porygon-'+'Z','ポリゴンＺ':a0_0xfae5a6(0x322)+'Z','엘레이드':a0_0xfae5a6(0xc0),'エルレイド':'Gallade','대코파스':a0_0xfae5a6(0x18a)+'s','ダイノーズ':a0_0xfae5a6(0x18a)+'s','야느와르몽':a0_0xfae5a6(0x28b),'ヨノワール':a0_0xfae5a6(0x28b),'눈여아':a0_0xfae5a6(0x510),'ユキメノコ':a0_0xfae5a6(0x510),'로토무':a0_0xfae5a6(0x54e),'ロトム':a0_0xfae5a6(0x54e),'유크시':a0_0xfae5a6(0x3c1),'ユクシー':a0_0xfae5a6(0x3c1),'엠라이트':a0_0xfae5a6(0x379),'エムリット':a0_0xfae5a6(0x379),'아그놈':a0_0xfae5a6(0x5c3),'アグノム':a0_0xfae5a6(0x5c3),'디아루가':'Dialga','ディアルガ':'Dialga','펄기아':a0_0xfae5a6(0x554),'パルキア':'Palkia','히드런':a0_0xfae5a6(0x45f),'ヒードラン':'Heatran','레지기가스':a0_0xfae5a6(0xe2)+'s','レジギガス':a0_0xfae5a6(0xe2)+'s','기라티나':a0_0xfae5a6(0x498),'ギラティナ':a0_0xfae5a6(0x498),'크레세리아':'Cresseli'+'a','クレセリア':a0_0xfae5a6(0x698)+'a','피오네':'Phione','フィオネ':'Phione','마나피':a0_0xfae5a6(0x6b8),'マナフィ':a0_0xfae5a6(0x6b8),'다크라이':a0_0xfae5a6(0x324),'ダークライ':a0_0xfae5a6(0x324),'쉐이미':a0_0xfae5a6(0x5c4),'シェイミ':a0_0xfae5a6(0x5c4),'아르세우스':a0_0xfae5a6(0x473),'アルセウス':'Arceus','비크티니':a0_0xfae5a6(0xf8),'ビクティニ':'Victini','주리비얀':'Snivy','ツタージャ':a0_0xfae5a6(0x3f4),'샤비':a0_0xfae5a6(0x100),'ジャノビー':a0_0xfae5a6(0x100),'샤로다':'Serperio'+'r','ジャローダ':'Serperio'+'r','뚜꾸리':a0_0xfae5a6(0x3bc),'ポカブ':'Tepig','차오꿀':a0_0xfae5a6(0x4f5),'チャオブー':a0_0xfae5a6(0x4f5),'염무왕':a0_0xfae5a6(0x2b2),'エンブオー':a0_0xfae5a6(0x2b2),'수댕이':a0_0xfae5a6(0x6af),'ミジュマル':a0_0xfae5a6(0x6af),'쌍검자비':a0_0xfae5a6(0x41e),'フタチマル':a0_0xfae5a6(0x41e),'대검귀':a0_0xfae5a6(0x18f),'ダイケンキ':a0_0xfae5a6(0x18f),'보르쥐':a0_0xfae5a6(0x2ab),'ミネズミ':'Patrat','보르그':a0_0xfae5a6(0x233),'ミルホッグ':a0_0xfae5a6(0x233),'요테리':a0_0xfae5a6(0x1f6),'ヨーテリー':'Lillipup','하데리어':a0_0xfae5a6(0x426),'ハーデリア':a0_0xfae5a6(0x426),'바랜드':a0_0xfae5a6(0x436)+'d','ムーランド':a0_0xfae5a6(0x436)+'d','쌔비냥':a0_0xfae5a6(0x169),'チョロネコ':a0_0xfae5a6(0x169),'레파르다스':a0_0xfae5a6(0x284),'レパルダス':a0_0xfae5a6(0x284),'야나프':a0_0xfae5a6(0x612),'ヤナップ':a0_0xfae5a6(0x612),'야나키':a0_0xfae5a6(0x3eb),'ヤナッキー':a0_0xfae5a6(0x3eb),'바오프':a0_0xfae5a6(0x64a),'バオップ':'Pansear','바오키':a0_0xfae5a6(0x43a),'バオッキー':a0_0xfae5a6(0x43a),'앗차프':a0_0xfae5a6(0x42c),'ヒヤップ':'Panpour','앗차키':a0_0xfae5a6(0x2a3),'ヒヤッキー':a0_0xfae5a6(0x2a3),'몽나':a0_0xfae5a6(0x47b),'ムンナ':a0_0xfae5a6(0x47b),'몽얌나':a0_0xfae5a6(0x68f),'ムシャーナ':a0_0xfae5a6(0x68f),'콩둘기':'Pidove','マメパト':a0_0xfae5a6(0x2ea),'유토브':a0_0xfae5a6(0x232)+'l','ハトーボー':a0_0xfae5a6(0x232)+'l','켄호로우':a0_0xfae5a6(0x496),'ケンホロウ':a0_0xfae5a6(0x496),'줄뮤마':'Blitzle','シママ':a0_0xfae5a6(0x3f1),'제브라이카':a0_0xfae5a6(0x127)+'a','ゼブライカ':'Zebstrik'+'a','단굴':'Roggenro'+'la','ダンゴロ':'Roggenro'+'la','암트르':a0_0xfae5a6(0x6f4),'ガントル':'Boldore','기가이어스':a0_0xfae5a6(0x652),'ギガイアス':a0_0xfae5a6(0x652),'또르박쥐':a0_0xfae5a6(0x3d5),'コロモリ':'Woobat','맘박쥐':'Swoobat','ココロモリ':a0_0xfae5a6(0x107),'두더류':a0_0xfae5a6(0xea),'モグリュー':a0_0xfae5a6(0xea),'몰드류':a0_0xfae5a6(0x2f4)+'l','ドリュウズ':'Excadril'+'l','다부니':a0_0xfae5a6(0x208),'タブンネ':'Audino','으랏차':a0_0xfae5a6(0x688),'ドッコラー':'Timburr','토쇠골':a0_0xfae5a6(0x6e7),'ドテッコツ':a0_0xfae5a6(0x6e7),'노보청':'Conkeldu'+'rr','ローブシン':a0_0xfae5a6(0x264)+'rr','동챙이':a0_0xfae5a6(0x211),'オタマロ':a0_0xfae5a6(0x211),'두까비':a0_0xfae5a6(0x53a)+'d','ガマガル':a0_0xfae5a6(0x53a)+'d','두빅굴':a0_0xfae5a6(0x43f)+'ad','ガマゲロゲ':a0_0xfae5a6(0x43f)+'ad','던지미':a0_0xfae5a6(0x441),'ナゲキ':'Throh','타격귀':a0_0xfae5a6(0x669),'ダゲキ':a0_0xfae5a6(0x669),'두르보':a0_0xfae5a6(0x52f),'クルミル':'Sewaddle','두르쿤':a0_0xfae5a6(0x359),'クルマユ':a0_0xfae5a6(0x359),'모아머':a0_0xfae5a6(0x5b6),'ハハコモリ':a0_0xfae5a6(0x5b6),'마디네':a0_0xfae5a6(0x216),'フシデ':a0_0xfae5a6(0x216),'휠구':a0_0xfae5a6(0x386)+'de','ホイーガ':a0_0xfae5a6(0x386)+'de','펜드라':a0_0xfae5a6(0x1ad)+'e','ペンドラー':a0_0xfae5a6(0x1ad)+'e','소미안':a0_0xfae5a6(0x6ef),'モンメン':a0_0xfae5a6(0x6ef),'엘풍':a0_0xfae5a6(0x374)+'tt','エルフーン':'Whimsico'+'tt','치릴리':a0_0xfae5a6(0x67d),'チュリネ':a0_0xfae5a6(0x67d),'드레디어':a0_0xfae5a6(0x565)+'t','ドレディア':a0_0xfae5a6(0x565)+'t','배쓰나이':a0_0xfae5a6(0x132),'バスラオ':a0_0xfae5a6(0x132),'깜눈크':a0_0xfae5a6(0xf7),'メグロコ':a0_0xfae5a6(0xf7),'악비르':a0_0xfae5a6(0x380),'ワルビル':a0_0xfae5a6(0x380),'악비아르':a0_0xfae5a6(0x222)+'le','ワルビアル':a0_0xfae5a6(0x222)+'le','달막화':a0_0xfae5a6(0x289),'ダルマッカ':'Darumaka','불비달마':a0_0xfae5a6(0x6e0)+'an','ヒヒダルマ':'Darmanit'+'an','마라카치':a0_0xfae5a6(0x45e),'マラカッチ':'Maractus','돌살이':'Dwebble','イシズマイ':a0_0xfae5a6(0x1e7),'암팰리스':a0_0xfae5a6(0x396),'イワパレス':'Crustle','곤율랭':a0_0xfae5a6(0x259),'ズルッグ':a0_0xfae5a6(0x259),'곤율거니':a0_0xfae5a6(0x3c3),'ズルズキン':a0_0xfae5a6(0x3c3),'심보러':a0_0xfae5a6(0x3d7),'シンボラー':a0_0xfae5a6(0x3d7),'데스마스':a0_0xfae5a6(0x39b),'デスマス':'Yamask','데스니칸':'Cofagrig'+'us','デスカーン':'Cofagrig'+'us','프로토가':a0_0xfae5a6(0x2e6),'プロトーガ':a0_0xfae5a6(0x2e6),'늑골라':a0_0xfae5a6(0x3ec)+'ta','アバゴーラ':a0_0xfae5a6(0x3ec)+'ta','아켄':a0_0xfae5a6(0x35c),'アーケン':'Archen','아케오스':a0_0xfae5a6(0x670),'アーケオス':'Archeops','깨봉이':a0_0xfae5a6(0x3b1),'ヤブクロン':a0_0xfae5a6(0x3b1),'더스트나':a0_0xfae5a6(0x382),'ダストダス':a0_0xfae5a6(0x382),'조로아':a0_0xfae5a6(0x4a1),'ゾロア':'Zorua','조로아크':a0_0xfae5a6(0x292),'ゾロアーク':a0_0xfae5a6(0x292),'치라미':a0_0xfae5a6(0x164),'チラーミィ':a0_0xfae5a6(0x164),'치라치노':a0_0xfae5a6(0x584),'チラチーノ':a0_0xfae5a6(0x584),'고디탱':a0_0xfae5a6(0x4be),'ゴチム':'Gothita','고디보미':a0_0xfae5a6(0x491)+'a','ゴチミル':a0_0xfae5a6(0x491)+'a','고디모아젤':'Gothitel'+'le','ゴチルゼル':a0_0xfae5a6(0x583)+'le','유니란':'Solosis','ユニラン':'Solosis','듀란':'Duosion','ダブラン':'Duosion','란쿨루스':'Reuniclu'+'s','ランクルス':'Reuniclu'+'s','꼬지보리':a0_0xfae5a6(0x67f),'コアルヒー':'Ducklett','스완나':a0_0xfae5a6(0x2c0),'スワンナ':a0_0xfae5a6(0x2c0),'바닐프티':a0_0xfae5a6(0x559)+'e','バニプッチ':a0_0xfae5a6(0x559)+'e','바닐리치':'Vanillis'+'h','バニリッチ':'Vanillis'+'h','배바닐라':a0_0xfae5a6(0x593)+'e','バイバニラ':a0_0xfae5a6(0x593)+'e','사철록':a0_0xfae5a6(0x273),'シキジカ':'Deerling','바라철록':'Sawsbuck','メブキジカ':a0_0xfae5a6(0x3d9),'에몽가':a0_0xfae5a6(0x417),'エモンガ':a0_0xfae5a6(0x417),'딱정곤':a0_0xfae5a6(0x451)+'st','カブルモ':a0_0xfae5a6(0x451)+'st','슈바르고':a0_0xfae5a6(0xd2)+'er','シュバルゴ':a0_0xfae5a6(0xd2)+'er','깜놀버슬':a0_0xfae5a6(0x4f4),'タマゲタケ':a0_0xfae5a6(0x4f4),'뽀록나':a0_0xfae5a6(0x1ca)+'s','モロバレル':a0_0xfae5a6(0x1ca)+'s','탱그릴':a0_0xfae5a6(0x448),'プルリル':a0_0xfae5a6(0x448),'탱탱겔':a0_0xfae5a6(0x37f)+'t','ブルンゲル':a0_0xfae5a6(0x37f)+'t','맘복치':a0_0xfae5a6(0xb8)+'a','ママンボウ':a0_0xfae5a6(0xb8)+'a','파쪼옥':a0_0xfae5a6(0x685),'バチュル':a0_0xfae5a6(0x685),'전툴라':a0_0xfae5a6(0x3d2)+'la','デンチュラ':'Galvantu'+'la','철시드':a0_0xfae5a6(0x575)+'d','テッシード':'Ferrosee'+'d','너트령':'Ferrotho'+'rn','ナットレイ':a0_0xfae5a6(0x3c8)+'rn','기어르':a0_0xfae5a6(0x154),'ギアル':'Klink','기기어르':a0_0xfae5a6(0x188),'ギギアル':a0_0xfae5a6(0x188),'기기기어르':a0_0xfae5a6(0xc7)+'g','ギギギアル':'Klinklan'+'g','저리어':'Tynamo','シビシラス':a0_0xfae5a6(0x6f0),'저리릴':a0_0xfae5a6(0x399)+'k','シビビール':a0_0xfae5a6(0x399)+'k','저리더프':a0_0xfae5a6(0x4df)+'ss','シビルドン':'Eelektro'+'ss','리그레':a0_0xfae5a6(0x26a),'リグレー':a0_0xfae5a6(0x26a),'벰크':a0_0xfae5a6(0x59f),'オーベム':a0_0xfae5a6(0x59f),'불켜미':a0_0xfae5a6(0x30c),'ヒトモシ':'Litwick','램프라':a0_0xfae5a6(0x1aa),'ランプラー':'Lampent','샹델라':a0_0xfae5a6(0x62f)+'re','シャンデラ':'Chandelu'+'re','터검니':a0_0xfae5a6(0x5b2),'キバゴ':'Axew','액슨도':a0_0xfae5a6(0x610),'オノンド':a0_0xfae5a6(0x610),'액스라이즈':a0_0xfae5a6(0x194),'オノノクス':a0_0xfae5a6(0x194),'코고미':a0_0xfae5a6(0x5d3),'クマシュン':a0_0xfae5a6(0x5d3),'툰베어':'Beartic','ツンベアー':'Beartic','프리지오':a0_0xfae5a6(0x202)+'l','フリージオ':a0_0xfae5a6(0x202)+'l','쪼마리':a0_0xfae5a6(0x47c),'チョボマキ':a0_0xfae5a6(0x47c),'어지리더':'Accelgor','アギルダー':a0_0xfae5a6(0x524),'메더':a0_0xfae5a6(0x34a),'マッギョ':a0_0xfae5a6(0x34a),'비조푸':a0_0xfae5a6(0x6e2),'コジョフー':'Mienfoo','비조도':a0_0xfae5a6(0x3cd),'コジョンド':a0_0xfae5a6(0x3cd),'크리만':a0_0xfae5a6(0x589)+'n','クリムガン':a0_0xfae5a6(0x589)+'n','골비람':a0_0xfae5a6(0x37d),'ゴビット':a0_0xfae5a6(0x37d),'골루그':a0_0xfae5a6(0x1f3),'ゴルーグ':a0_0xfae5a6(0x1f3),'자망칼':'Pawniard','コマタナ':a0_0xfae5a6(0x38b),'절각참':'Bisharp','キリキザン':a0_0xfae5a6(0x434),'버프론':'Bouffala'+'nt','バッフロン':'Bouffala'+'nt','수리둥보':'Rufflet','ワシボン':a0_0xfae5a6(0x2d5),'워글':a0_0xfae5a6(0x430),'ウォーグル':a0_0xfae5a6(0x430),'벌차이':a0_0xfae5a6(0x1f0),'バルチャイ':'Vullaby','버랜지나':a0_0xfae5a6(0x4f1)+'z','バルジーナ':'Mandibuz'+'z','앤티골':a0_0xfae5a6(0x541),'クイタラン':a0_0xfae5a6(0x541),'아이앤트':a0_0xfae5a6(0x3fd),'アイアント':a0_0xfae5a6(0x3fd),'모노두':a0_0xfae5a6(0x44e),'モノズ':a0_0xfae5a6(0x44e),'디헤드':a0_0xfae5a6(0x288),'ジヘッド':a0_0xfae5a6(0x288),'삼삼드래':a0_0xfae5a6(0x3af)+'n','サザンドラ':a0_0xfae5a6(0x3af)+'n','활화르바':a0_0xfae5a6(0x5b1),'メラルバ':'Larvesta','불카모스':a0_0xfae5a6(0x387)+'a','ウルガモス':a0_0xfae5a6(0x387)+'a','코바르온':a0_0xfae5a6(0x65c),'コバルオン':'Cobalion','테라키온':a0_0xfae5a6(0x1e3)+'n','テラキオン':'Terrakio'+'n','비리디온':a0_0xfae5a6(0x44b),'ビリジオン':'Virizion','토네로스':a0_0xfae5a6(0x14e),'トルネロス':a0_0xfae5a6(0x14e),'볼트로스':a0_0xfae5a6(0x44c)+'s','ボルトロス':'Thunduru'+'s','레시라무':'Reshiram','レシラム':'Reshiram','제크로무':a0_0xfae5a6(0x339),'ゼクロム':a0_0xfae5a6(0x339),'랜드로스':a0_0xfae5a6(0x46b),'ランドロス':a0_0xfae5a6(0x46b),'큐레무':a0_0xfae5a6(0x281),'キュレム':a0_0xfae5a6(0x281),'케르디오':'Keldeo','ケルディオ':'Keldeo','메로엣타':a0_0xfae5a6(0x466),'メロエッタ':a0_0xfae5a6(0x466),'게노세크트':a0_0xfae5a6(0x2dc),'ゲノセクト':a0_0xfae5a6(0x2dc),'도치마론':a0_0xfae5a6(0x673),'ハリマロン':a0_0xfae5a6(0x673),'도치보구':a0_0xfae5a6(0x16f)+'n','ハリボーグ':a0_0xfae5a6(0x16f)+'n','브리가론':a0_0xfae5a6(0x564)+'ht','ブリガロン':a0_0xfae5a6(0x564)+'ht','푸호꼬':a0_0xfae5a6(0x6de),'フォッコ':'Fennekin','테르나':'Braixen','テールナー':'Braixen','마폭시':'Delphox','マフォクシー':a0_0xfae5a6(0x55b),'개구마르':a0_0xfae5a6(0x550),'ケロマツ':a0_0xfae5a6(0x550),'개굴반장':a0_0xfae5a6(0x400)+'r','ゲコガシラ':a0_0xfae5a6(0x400)+'r','개굴닌자':a0_0xfae5a6(0x6ae),'ゲッコウガ':'Greninja','파르빗':a0_0xfae5a6(0x623),'ホルビー':a0_0xfae5a6(0x623),'파르토':a0_0xfae5a6(0x489)+'y','ホルード':'Diggersb'+'y','화살꼬빈':a0_0xfae5a6(0x24b)+'ng','ヤヤコマ':'Fletchli'+'ng','불화살빈':'Fletchin'+a0_0xfae5a6(0x25b),'ヒノヤコマ':a0_0xfae5a6(0x5f4)+a0_0xfae5a6(0x25b),'파이어로':a0_0xfae5a6(0x460)+'me','ファイアロー':a0_0xfae5a6(0x460)+'me','분이벌레':a0_0xfae5a6(0x2e2)+'ug','コフキムシ':a0_0xfae5a6(0x2e2)+'ug','분떠도리':a0_0xfae5a6(0x4fb),'コフーライ':'Spewpa','비비용':a0_0xfae5a6(0xe8),'ビビヨン':a0_0xfae5a6(0xe8),'레오꼬':a0_0xfae5a6(0xef),'シシコ':a0_0xfae5a6(0xef),'화염레오':'Pyroar','カエンジシ':a0_0xfae5a6(0x5a8),'플라베베':a0_0xfae5a6(0x313),'フラベベ':a0_0xfae5a6(0x313),'플라엣테':a0_0xfae5a6(0x209),'フラエッテ':a0_0xfae5a6(0x209),'플라제스':'Florges','フラージェス':a0_0xfae5a6(0x627),'메이클':a0_0xfae5a6(0x61b),'メェークル':a0_0xfae5a6(0x61b),'고고트':a0_0xfae5a6(0x405),'ゴーゴート':'Gogoat','판짱':a0_0xfae5a6(0x65d),'ヤンチャム':'Pancham','부란다':a0_0xfae5a6(0x40d),'ゴロンダ':a0_0xfae5a6(0x40d),'트리미앙':a0_0xfae5a6(0x545),'トリミアン':a0_0xfae5a6(0x545),'냐스퍼':a0_0xfae5a6(0x221),'ニャスパー':a0_0xfae5a6(0x221),'냐오닉스':a0_0xfae5a6(0x678),'ニャオニクス':'Meowstic','단칼빙':a0_0xfae5a6(0x24e),'ヒトツキ':a0_0xfae5a6(0x24e),'쌍검킬':a0_0xfae5a6(0x113),'ニダンギル':a0_0xfae5a6(0x113),'킬가르도':'Aegislas'+'h','ギルガルド':a0_0xfae5a6(0x34f)+'h','슈쁘':a0_0xfae5a6(0x6b6),'シュシュプ':a0_0xfae5a6(0x6b6),'프레프티르':a0_0xfae5a6(0x296)+'se','フレフワン':a0_0xfae5a6(0x296)+'se','나룸퍼프':a0_0xfae5a6(0x45c),'ペロッパフ':a0_0xfae5a6(0x45c),'나루림':a0_0xfae5a6(0x423),'ペロリーム':a0_0xfae5a6(0x423),'오케이징':a0_0xfae5a6(0xde),'マーイーカ':a0_0xfae5a6(0xde),'칼라마네로':'Malamar','カラマネロ':a0_0xfae5a6(0x162),'거북손손':a0_0xfae5a6(0x57b),'カメテテ':a0_0xfae5a6(0x57b),'거북손데스':a0_0xfae5a6(0x519)+'le','ガメノデス':a0_0xfae5a6(0x519)+'le','수레기':'Skrelp','クズモー':'Skrelp','드래캄':a0_0xfae5a6(0x212),'ドラミドロ':a0_0xfae5a6(0x212),'완철포':'Claunche'+'r','ウデッポウ':'Claunche'+'r','블로스터':a0_0xfae5a6(0x395)+'r','ブロスター':'Clawitze'+'r','목도리키텔':a0_0xfae5a6(0x11a)+'le','エリキテル':'Heliopti'+'le','일레도리자드':'Heliolis'+'k','エレザード':a0_0xfae5a6(0x241)+'k','티고라스':a0_0xfae5a6(0x60a),'チゴラス':a0_0xfae5a6(0x60a),'견고라스':a0_0xfae5a6(0x173)+'m','ガチゴラス':a0_0xfae5a6(0x173)+'m','아마루스':a0_0xfae5a6(0x375),'アマルス':'Amaura','아마루르가':a0_0xfae5a6(0x527),'アマルルガ':'Aurorus','님피아':a0_0xfae5a6(0x1c9),'ニンフィア':a0_0xfae5a6(0x1c9),'루차불':a0_0xfae5a6(0x3f7),'ルチャブル':'Hawlucha','데덴네':'Dedenne','デデンネ':a0_0xfae5a6(0x4a9),'멜리시':a0_0xfae5a6(0x4c7),'メレシー':a0_0xfae5a6(0x4c7),'미끄메라':a0_0xfae5a6(0x6a4),'ヌメラ':a0_0xfae5a6(0x6a4),'미끄네일':'Sliggoo','ヌメイル':a0_0xfae5a6(0x568),'미끄래곤':a0_0xfae5a6(0x51e),'ヌメルゴン':'Goodra','클레피':a0_0xfae5a6(0x4b6),'クレッフィ':'Klefki','나목령':a0_0xfae5a6(0x25c),'ボクレー':a0_0xfae5a6(0x25c),'대로트':a0_0xfae5a6(0x2cc)+'t','オーロット':a0_0xfae5a6(0x2cc)+'t','호바귀':'Pumpkabo'+'o','バケッチャ':a0_0xfae5a6(0xd9)+'o','펌킨인':a0_0xfae5a6(0x276)+'t','パンプジン':a0_0xfae5a6(0x276)+'t','꽁어름':a0_0xfae5a6(0x2eb),'カチコール':a0_0xfae5a6(0x2eb),'크레베이스':a0_0xfae5a6(0x308),'クレベース':a0_0xfae5a6(0x308),'음뱃':a0_0xfae5a6(0x68c),'オンバット':'Noibat','음번':'Noivern','オンバーン':'Noivern','제르네아스':a0_0xfae5a6(0x6bf),'ゼルネアス':'Xerneas','이벨타르':a0_0xfae5a6(0x635),'イベルタル':a0_0xfae5a6(0x635),'지가르데':a0_0xfae5a6(0x675),'ジガルデ':'Zygarde','디안시':a0_0xfae5a6(0x410),'ディアンシー':'Diancie','후파':'Hoopa','フーパ':a0_0xfae5a6(0x556),'볼케니온':a0_0xfae5a6(0x538)+'n','ボルケニオン':a0_0xfae5a6(0x538)+'n','나몰빼미':'Rowlet','モクロー':a0_0xfae5a6(0x4d6),'빼미스로우':a0_0xfae5a6(0x35d),'フクスロー':a0_0xfae5a6(0x35d),'모크나이퍼':a0_0xfae5a6(0x661)+'e','ジュナイパー':'Deciduey'+'e','냐오불':a0_0xfae5a6(0x6cc),'ニャビー':a0_0xfae5a6(0x6cc),'냐오히트':a0_0xfae5a6(0x3ef),'ニャヒート':a0_0xfae5a6(0x3ef),'어흥염':a0_0xfae5a6(0x17e)+'ar','ガオガエン':'Incinero'+'ar','누리공':a0_0xfae5a6(0x12c),'アシマリ':a0_0xfae5a6(0x12c),'키요공':'Brionne','オシャマリ':'Brionne','누리레느':a0_0xfae5a6(0x14d)+'a','アシレーヌ':a0_0xfae5a6(0x14d)+'a','콕코구리':a0_0xfae5a6(0x6f3),'ツツケラ':a0_0xfae5a6(0x6f3),'크라파':a0_0xfae5a6(0x526),'ケララッパ':'Trumbeak','왕큰부리':a0_0xfae5a6(0x153)+'n','ドデカバシ':a0_0xfae5a6(0x153)+'n','영구스':a0_0xfae5a6(0x515),'ヤングース':a0_0xfae5a6(0x515),'형사구스':a0_0xfae5a6(0x435),'デカグース':'Gumshoos','턱지충이':a0_0xfae5a6(0x159),'アゴジムシ':'Grubbin','전지충이':a0_0xfae5a6(0x1c3)+'g','デンヂムシ':a0_0xfae5a6(0x1c3)+'g','투구뿌논':a0_0xfae5a6(0x55e),'クワガノン':a0_0xfae5a6(0x55e),'오기지게':a0_0xfae5a6(0x148)+'er','マケンカニ':a0_0xfae5a6(0x148)+'er','모단단게':'Crabomin'+a0_0xfae5a6(0x15e),'ケケンカニ':a0_0xfae5a6(0x533)+'able','춤추새':a0_0xfae5a6(0x3fa),'オドリドリ':a0_0xfae5a6(0x3fa),'에블리':a0_0xfae5a6(0xf5),'アブリー':a0_0xfae5a6(0xf5),'에리본':a0_0xfae5a6(0x27a),'アブリボン':a0_0xfae5a6(0x27a),'암멍이':a0_0xfae5a6(0x2d3),'イワンコ':a0_0xfae5a6(0x2d3),'루가루암':a0_0xfae5a6(0x6c5),'ルガルガン':'Lycanroc','약어리':a0_0xfae5a6(0x608)+'hi','ヨワシ':a0_0xfae5a6(0x608)+'hi','시마사리':'Mareanie','ヒドイデ':a0_0xfae5a6(0x572),'더시마사리':a0_0xfae5a6(0x609),'ドヒドイデ':a0_0xfae5a6(0x609),'머드나기':a0_0xfae5a6(0x384),'ドロバンコ':a0_0xfae5a6(0x384),'만마드':a0_0xfae5a6(0x5db),'バンバドロ':'Mudsdale','물거미':'Dewpider','シズクモ':a0_0xfae5a6(0x13d),'깨비물거미':a0_0xfae5a6(0x68d)+'d','オニシズクモ':a0_0xfae5a6(0x68d)+'d','짜랑랑':'Fomantis','カリキリ':'Fomantis','라란티스':a0_0xfae5a6(0x2a0),'ラランテス':a0_0xfae5a6(0x2a0),'자마슈':a0_0xfae5a6(0x2e7),'ネマシュ':'Morelull','마셰이드':a0_0xfae5a6(0x4bc)+'c','マシェード':'Shiinoti'+'c','야도뇽':a0_0xfae5a6(0x13b),'ヤトウモリ':'Salandit','염뉴트':a0_0xfae5a6(0x1ee),'エンニュート':a0_0xfae5a6(0x1ee),'포곰곰':a0_0xfae5a6(0x6dd),'ヌイコグマ':a0_0xfae5a6(0x6dd),'이븐곰':a0_0xfae5a6(0x2f6),'キテルグマ':a0_0xfae5a6(0x2f6),'달콤아':a0_0xfae5a6(0x56f)+'t','アマカジ':a0_0xfae5a6(0x56f)+'t','달무리나':a0_0xfae5a6(0x54b),'アママイコ':a0_0xfae5a6(0x54b),'달코퀸':a0_0xfae5a6(0x230),'アマージョ':a0_0xfae5a6(0x230),'큐아링':a0_0xfae5a6(0x5b9),'キュワワー':a0_0xfae5a6(0x5b9),'하랑우탄':a0_0xfae5a6(0x615),'ヤレユータン':a0_0xfae5a6(0x615),'내던숭이':'Passimia'+'n','ナゲツケサル':a0_0xfae5a6(0x5f7)+'n','꼬시레':a0_0xfae5a6(0x3cb),'コソクムシ':a0_0xfae5a6(0x3cb),'갑주무사':a0_0xfae5a6(0x6db)+'d','グソクムシャ':'Golisopo'+'d','모래꿍':a0_0xfae5a6(0x245)+'t','スナバァ':'Sandygas'+'t','모래성이당':a0_0xfae5a6(0x2c3)+'d','シロデスナ':a0_0xfae5a6(0x2c3)+'d','해무기':a0_0xfae5a6(0x6c0)+'u','ナマコブシ':a0_0xfae5a6(0x6c0)+'u','타입:널':a0_0xfae5a6(0x639)+'ll','タイプ：ヌル':'Type:\x20Nu'+'ll','실버디':a0_0xfae5a6(0x699),'シルヴァディ':a0_0xfae5a6(0x699),'메테노':a0_0xfae5a6(0x1e2),'メテノ':'Minior','자말라':'Komala','ネッコアラ':a0_0xfae5a6(0x1fa),'폭거북스':a0_0xfae5a6(0x1e0)+'or','バクガメス':a0_0xfae5a6(0x1e0)+'or','토게데마루':'Togedema'+'ru','トゲデマル':a0_0xfae5a6(0x655)+'ru','따라큐':a0_0xfae5a6(0x320),'ミミッキュ':a0_0xfae5a6(0x320),'치갈기':a0_0xfae5a6(0x5bf),'ハギギシリ':a0_0xfae5a6(0x5bf),'할비롱':'Drampa','ジジーロン':a0_0xfae5a6(0x278),'타타륜':a0_0xfae5a6(0x3bf),'ダダリン':'Dhelmise','짜랑꼬':a0_0xfae5a6(0x360),'ジャラコ':'Jangmo-o','짜랑고우':a0_0xfae5a6(0x65b),'ジャランゴ':a0_0xfae5a6(0x65b),'짜랑고우거':a0_0xfae5a6(0x2f1),'ジャラランガ':'Kommo-o','카푸꼬꼬꼭':a0_0xfae5a6(0x69c)+'o','カプ・コケコ':a0_0xfae5a6(0x69c)+'o','카푸나비나':a0_0xfae5a6(0x262)+'e','カプ・テテフ':a0_0xfae5a6(0x262)+'e','카푸브루루':a0_0xfae5a6(0x51f)+'u','カプ・ブルル':a0_0xfae5a6(0x51f)+'u','카푸느지느':'Tapu\x20Fin'+'i','カプ・レヒレ':a0_0xfae5a6(0x555)+'i','코스모그':'Cosmog','コスモッグ':'Cosmog','코스모움':a0_0xfae5a6(0x571),'コスモウム':a0_0xfae5a6(0x571),'솔가레오':a0_0xfae5a6(0x168),'ソルガレオ':a0_0xfae5a6(0x168),'루나아라':a0_0xfae5a6(0x4db),'ルナアーラ':a0_0xfae5a6(0x4db),'텅비드':'Nihilego','ウツロイド':a0_0xfae5a6(0x247),'매시붕':a0_0xfae5a6(0x388),'マッシブーン':a0_0xfae5a6(0x388),'페로코체':'Pheromos'+'a','フェローチェ':'Pheromos'+'a','전수목':a0_0xfae5a6(0x3ab)+'e','デンジュモク':a0_0xfae5a6(0x3ab)+'e','철화구야':'Celestee'+'la','テッカグヤ':'Celestee'+'la','종이신도':a0_0xfae5a6(0x672),'カミツルギ':a0_0xfae5a6(0x672),'악식킹':a0_0xfae5a6(0x48c),'アクジキング':a0_0xfae5a6(0x48c),'네크로즈마':'Necrozma','ネクロズマ':a0_0xfae5a6(0x6d6),'마기아나':a0_0xfae5a6(0x15c),'マギアナ':a0_0xfae5a6(0x15c),'마샤도':'Marshado'+'w','マーシャドー':a0_0xfae5a6(0x59c)+'w','베베놈':a0_0xfae5a6(0x6e1),'ベベノム':'Poipole','아고용':a0_0xfae5a6(0x378)+'l','アーゴヨン':a0_0xfae5a6(0x378)+'l','차곡차곡':a0_0xfae5a6(0x62b)+'a','ツンデツンデ':a0_0xfae5a6(0x62b)+'a','두파팡':a0_0xfae5a6(0x4dc)+'lon','ズガドーン':a0_0xfae5a6(0x4dc)+'lon','제라오라':a0_0xfae5a6(0x118),'ゼラオラ':a0_0xfae5a6(0x118),'멜탄':a0_0xfae5a6(0xdc),'メルタン':a0_0xfae5a6(0xdc),'멜메탈':a0_0xfae5a6(0x298),'メルメタル':'Melmetal','흥나숭':a0_0xfae5a6(0x27c),'サルノリ':'Grookey','채키몽':'Thwackey','バチンキー':a0_0xfae5a6(0x2af),'고릴타':'Rillaboo'+'m','ゴリランダー':'Rillaboo'+'m','염버니':a0_0xfae5a6(0x39e)+'y','ヒバニー':a0_0xfae5a6(0x39e)+'y','래비풋':a0_0xfae5a6(0x22d),'ラビフット':'Raboot','에이스번':'Cinderac'+'e','エースバーン':a0_0xfae5a6(0x312)+'e','울머기':a0_0xfae5a6(0x139),'メッソン':a0_0xfae5a6(0x139),'누겔레온':'Drizzile','ジメレオン':a0_0xfae5a6(0x50f),'인텔리레온':'Inteleon','インテレオン':'Inteleon','탐리스':'Skwovet','ホシガリス':a0_0xfae5a6(0x488),'요씽리스':a0_0xfae5a6(0x47f),'ヨクバリス':a0_0xfae5a6(0x47f),'파라꼬':a0_0xfae5a6(0x36c),'ココガラ':a0_0xfae5a6(0x36c),'파크로우':a0_0xfae5a6(0x1ff)+a0_0xfae5a6(0x362),'アオガラス':'Corvisqu'+a0_0xfae5a6(0x362),'아머까오':a0_0xfae5a6(0x606)+a0_0xfae5a6(0x65a),'アーマーガア':a0_0xfae5a6(0x606)+a0_0xfae5a6(0x65a),'두루지벌레':a0_0xfae5a6(0x674),'サッチムシ':a0_0xfae5a6(0x674),'레돔벌레':'Dottler','レドームシ':a0_0xfae5a6(0x4c0),'이올브':a0_0xfae5a6(0xf2),'イオルブ':a0_0xfae5a6(0xf2),'훔처우':a0_0xfae5a6(0x393),'クスネ':a0_0xfae5a6(0x393),'폭슬라이':a0_0xfae5a6(0x111),'フォクスライ':'Thievul','꼬모카':a0_0xfae5a6(0x6b2)+'ur','ヒメンカ':'Gossifle'+'ur','백솜모카':a0_0xfae5a6(0x4ad),'ワタシラガ':a0_0xfae5a6(0x4ad),'우르':a0_0xfae5a6(0x5ad),'ウールー':a0_0xfae5a6(0x5ad),'배우르':a0_0xfae5a6(0x32d),'バイウールー':a0_0xfae5a6(0x32d),'깨물부기':a0_0xfae5a6(0x27e),'カムカメ':'Chewtle','갈가부기':a0_0xfae5a6(0xd4),'カジリガメ':'Drednaw','멍파치':a0_0xfae5a6(0x2dd),'ワンパチ':a0_0xfae5a6(0x2dd),'펄스멍':a0_0xfae5a6(0x3b2),'パルスワン':a0_0xfae5a6(0x3b2),'탄동':'Rolycoly','タンドン':a0_0xfae5a6(0x6ba),'탄차곤':a0_0xfae5a6(0x55d),'トロッゴン':a0_0xfae5a6(0x55d),'석탄산':a0_0xfae5a6(0x490)+'l','セキタンザン':'Coalossa'+'l','과사삭벌레':a0_0xfae5a6(0x3cc),'カジッチュ':a0_0xfae5a6(0x3cc),'애프룡':a0_0xfae5a6(0x101),'アップリュー':a0_0xfae5a6(0x101),'단지래플':'Appletun','タルップル':a0_0xfae5a6(0x3b6),'모래뱀':a0_0xfae5a6(0x155)+'a','スナヘビ':a0_0xfae5a6(0x155)+'a','사다이사':'Sandacon'+'da','サダイジャ':a0_0xfae5a6(0x130)+'da','윽우지':a0_0xfae5a6(0x4f8)+'t','ウッウ':'Cramoran'+'t','찌로꼬치':a0_0xfae5a6(0x2b8),'サシカマス':'Arrokuda','꼬치조':a0_0xfae5a6(0x19f)+a0_0xfae5a6(0x614),'カマスジョー':a0_0xfae5a6(0x19f)+a0_0xfae5a6(0x614),'일레즌':'Toxel','エレズン':a0_0xfae5a6(0x1ae),'스트린더':a0_0xfae5a6(0x3ae)+'ty','ストリンダー':a0_0xfae5a6(0x3ae)+'ty','태우지네':a0_0xfae5a6(0x2d9)+'de','ヤクデ':a0_0xfae5a6(0x2d9)+'de','다태우지네':a0_0xfae5a6(0x44a)+a0_0xfae5a6(0x66b),'マルヤクデ':a0_0xfae5a6(0x44a)+a0_0xfae5a6(0x66b),'때때무노':'Clobbopu'+'s','タタッコ':a0_0xfae5a6(0x361)+'s','케오퍼스':'Grapploc'+'t','オトスパス':a0_0xfae5a6(0x431)+'t','데인차':a0_0xfae5a6(0x626),'ヤバチャ':a0_0xfae5a6(0x626),'포트데스':'Polteage'+a0_0xfae5a6(0x343),'ポットデス':'Polteage'+a0_0xfae5a6(0x343),'몸지브림':'Hatenna','ミブリム':'Hatenna','손지브림':a0_0xfae5a6(0x618),'テブリム':a0_0xfae5a6(0x618),'브리무음':a0_0xfae5a6(0x5b8)+'e','ブリムオン':a0_0xfae5a6(0x5b8)+'e','메롱꿍':a0_0xfae5a6(0x19a),'ベロバー':a0_0xfae5a6(0x19a),'쏘겨모':a0_0xfae5a6(0x49c),'ギモー':'Morgrem','오롱털':a0_0xfae5a6(0x68b)+'rl','オーロンゲ':a0_0xfae5a6(0x68b)+'rl','가로막구리':a0_0xfae5a6(0x329)+'n','タチフサグマ':a0_0xfae5a6(0x329)+'n','나이킹':a0_0xfae5a6(0x2d6)+'er','ニャイキング':'Perrserk'+'er','산호르곤':'Cursola','サニゴーン':a0_0xfae5a6(0x52c),'창파나이트':'Sirfetch'+'\x27d','ネギガナイト':'Sirfetch'+'\x27d','마임꽁꽁':a0_0xfae5a6(0x465),'バリコオル':'Mr.\x20Rime','데스판':a0_0xfae5a6(0x18b)+'s','デスバーン':'Runerigu'+'s','마빌크':'Milcery','マホミル':'Milcery','마휘핑':'Alcremie','マホイップ':'Alcremie','대여르':a0_0xfae5a6(0x6ec),'タイレーツ':'Falinks','찌르성게':a0_0xfae5a6(0x4cf)+'in','バチンウニ':a0_0xfae5a6(0x4cf)+'in','누니머기':a0_0xfae5a6(0x254),'ユキハミ':a0_0xfae5a6(0x254),'모스노우':'Frosmoth','モスノウ':a0_0xfae5a6(0x6c7),'돌헨진':a0_0xfae5a6(0x656)+a0_0xfae5a6(0x177),'イシヘンジン':a0_0xfae5a6(0x656)+a0_0xfae5a6(0x177),'빙큐보':a0_0xfae5a6(0x37e),'コオリッポ':'Eiscue','에써르':a0_0xfae5a6(0x3a9),'イエッサン':a0_0xfae5a6(0x3a9),'모르페코':'Morpeko','モルペコ':a0_0xfae5a6(0x597),'끼리동':a0_0xfae5a6(0xd7),'ゾウドウ':a0_0xfae5a6(0xd7),'대왕끼리동':a0_0xfae5a6(0x11d)+'ah','ダイオウドウ':a0_0xfae5a6(0x11d)+'ah','파치래곤':'Dracozol'+'t','パッチラゴン':'Dracozol'+'t','파치르돈':a0_0xfae5a6(0x43b)+'t','パッチルドン':'Arctozol'+'t','어래곤':a0_0xfae5a6(0x66a)+'h','ウオノラゴン':a0_0xfae5a6(0x66a)+'h','어치르돈':a0_0xfae5a6(0x3de)+'h','ウオチルドン':a0_0xfae5a6(0x3de)+'h','두랄루돈':a0_0xfae5a6(0x158)+'n','ジュラルドン':a0_0xfae5a6(0x158)+'n','드라꼰':a0_0xfae5a6(0x1c0),'ドラメシヤ':a0_0xfae5a6(0x1c0),'드래런치':a0_0xfae5a6(0x28c),'ドロンチ':'Drakloak','드래펄트':a0_0xfae5a6(0x580)+'t','ドラパルト':a0_0xfae5a6(0x580)+'t','자시안':a0_0xfae5a6(0x231),'ザシアン':a0_0xfae5a6(0x231),'자마젠타':a0_0xfae5a6(0x165)+'a','ザマゼンタ':a0_0xfae5a6(0x165)+'a','무한다이노':'Eternatu'+'s','ムゲンダイナ':'Eternatu'+'s','치고마':a0_0xfae5a6(0x567),'ダクマ':'Kubfu','우라오스':a0_0xfae5a6(0x604),'ウーラオス':a0_0xfae5a6(0x604),'자루도':a0_0xfae5a6(0x13a),'ザルード':'Zarude','레지에레키':a0_0xfae5a6(0x599)+'i','レジエレキ':a0_0xfae5a6(0x599)+'i','레지드래고':a0_0xfae5a6(0x346)+'o','レジドラゴ':a0_0xfae5a6(0x346)+'o','블리자포스':a0_0xfae5a6(0x43c)+'r','ブリザポス':a0_0xfae5a6(0x43c)+'r','레이스포스':a0_0xfae5a6(0x687)+'r','レイスポス':a0_0xfae5a6(0x687)+'r','버드렉스':'Calyrex','バドレックス':a0_0xfae5a6(0x157),'신비록':a0_0xfae5a6(0x338),'アヤシシ':a0_0xfae5a6(0x338),'사마자르':'Kleavor','バサギリ':a0_0xfae5a6(0x5c0),'다투곰':a0_0xfae5a6(0x6bb),'ガチグマ':a0_0xfae5a6(0x6bb),'대쓰여너':a0_0xfae5a6(0x327)+a0_0xfae5a6(0x1f9),'イダイトウ':a0_0xfae5a6(0x327)+a0_0xfae5a6(0x1f9),'포푸니크':a0_0xfae5a6(0x297),'オオニューラ':a0_0xfae5a6(0x297),'장침바루':'Overqwil','ハリーマン':'Overqwil','러브로스':a0_0xfae5a6(0x28d),'ラブトロス':a0_0xfae5a6(0x28d),'나오하':a0_0xfae5a6(0x2d8)+'to','ニャオハ':'Sprigati'+'to','나로테':a0_0xfae5a6(0x10f)+'o','ニャローテ':a0_0xfae5a6(0x10f)+'o','마스카나':a0_0xfae5a6(0x5e4)+a0_0xfae5a6(0x32f),'マスカーニャ':a0_0xfae5a6(0x5e4)+'ada','뜨아거':'Fuecoco','ホゲータ':'Fuecoco','악뜨거':a0_0xfae5a6(0x335),'アチゲータ':'Crocalor','라우드본':a0_0xfae5a6(0x658)+'ge','ラウドボーン':a0_0xfae5a6(0x658)+'ge','꾸왁스':a0_0xfae5a6(0x22b),'クワッス':'Quaxly','아꾸왁':a0_0xfae5a6(0xfb),'ウェルカモ':a0_0xfae5a6(0xfb),'웨이니발':a0_0xfae5a6(0xfe)+'l','ウェーニバル':a0_0xfae5a6(0xfe)+'l','맛보돈':'Lechonk','グルトン':a0_0xfae5a6(0x680),'퍼퓨돈':a0_0xfae5a6(0x23a)+'ne','パフュートン':'Oinkolog'+'ne','타랜툴라':a0_0xfae5a6(0x577)+'la','タマンチュラ':'Tarountu'+'la','트래피더':a0_0xfae5a6(0x695),'ワナイダー':a0_0xfae5a6(0x695),'콩알뚜기':'Nymble','マメバッタ':a0_0xfae5a6(0x625),'엑스레그':a0_0xfae5a6(0x6cb),'エクスレッグ':a0_0xfae5a6(0x6cb),'빠모':'Pawmi','パモ':a0_0xfae5a6(0x47e),'빠모트':a0_0xfae5a6(0x60f),'パモット':a0_0xfae5a6(0x60f),'빠르모트':'Pawmot','パーモット':a0_0xfae5a6(0x290),'두리쥐':'Tandemau'+'s','ワッカネズミ':a0_0xfae5a6(0x3f0)+'s','파밀리쥐':a0_0xfae5a6(0x5e0),'イッカネズミ':a0_0xfae5a6(0x5e0),'쫀도기':a0_0xfae5a6(0xce),'パピモッチ':a0_0xfae5a6(0xce),'바우첼':'Dachsbun','バウッツェル':a0_0xfae5a6(0x4bf),'미니브':a0_0xfae5a6(0x2e0),'ミニーブ':a0_0xfae5a6(0x2e0),'올리뇨':a0_0xfae5a6(0x1fb),'オリーニョ':a0_0xfae5a6(0x1fb),'올리르바':a0_0xfae5a6(0x166),'オリーヴァ':a0_0xfae5a6(0x166),'시비꼬':'Squawkab'+a0_0xfae5a6(0x3bb),'イキリンコ':'Squawkab'+'illy','베베솔트':a0_0xfae5a6(0x4b9),'コジオ':a0_0xfae5a6(0x4b9),'스태솔트':'Naclstac'+'k','ジオヅム':a0_0xfae5a6(0x2fc)+'k','콜로솔트':'Garganac'+'l','キョジオーン':a0_0xfae5a6(0x29f)+'l','카르본':a0_0xfae5a6(0x2b6)+'t','カルボウ':'Charcade'+'t','카디나르마':a0_0xfae5a6(0x14a)+'e','グレンアルマ':a0_0xfae5a6(0x14a)+'e','파라블레이즈':'Ceruledg'+'e','ソウブレイズ':a0_0xfae5a6(0x537)+'e','빈나두':'Tadbulb','ズピカ':a0_0xfae5a6(0xc2),'찌리배리':a0_0xfae5a6(0x429)+'t','ハラバリー':a0_0xfae5a6(0x429)+'t','찌리비':a0_0xfae5a6(0x3c4),'カイデン':'Wattrel','찌리비크':a0_0xfae5a6(0x2df)+a0_0xfae5a6(0x420),'タイカイデン':a0_0xfae5a6(0x2df)+a0_0xfae5a6(0x420),'오라티프':'Maschiff','オラチフ':a0_0xfae5a6(0x1ce),'마피티프':'Mabossti'+'ff','マフィティフ':a0_0xfae5a6(0x649)+'ff','땃쭈르':a0_0xfae5a6(0x5e1),'シルシュルー':a0_0xfae5a6(0x5e1),'태깅구르':a0_0xfae5a6(0x64c),'タギングル':a0_0xfae5a6(0x64c),'그푸리':a0_0xfae5a6(0x502),'アノクサ':a0_0xfae5a6(0x502),'공푸리':a0_0xfae5a6(0x2b4)+a0_0xfae5a6(0x3ed),'アノホラグサ':a0_0xfae5a6(0x2b4)+a0_0xfae5a6(0x3ed),'들눈해':'Toedscoo'+'l','ノノクラゲ':'Toedscoo'+'l','육파리':a0_0xfae5a6(0x422)+'el','リククラゲ':a0_0xfae5a6(0x422)+'el','절벼게':a0_0xfae5a6(0x4d9),'ガケガニ':a0_0xfae5a6(0x4d9),'캡싸이':a0_0xfae5a6(0x5c2),'カプサイジ':a0_0xfae5a6(0x5c2),'스코빌런':a0_0xfae5a6(0x17a)+'in','スコヴィラン':a0_0xfae5a6(0x17a)+'in','구르데':'Rellor','シガロコ':a0_0xfae5a6(0x48e),'베라카스':'Rabsca','ベラカス':'Rabsca','하느라기':a0_0xfae5a6(0x3d4),'ヒラヒナ':a0_0xfae5a6(0x3d4),'클레스퍼트라':a0_0xfae5a6(0x485),'クエスパトラ':'Espathra','어리짱':a0_0xfae5a6(0x3e1)+'k','カヌチャン':a0_0xfae5a6(0x3e1)+'k','벼리짱':a0_0xfae5a6(0x239)+'f','ナカヌチャン':a0_0xfae5a6(0x239)+'f','두드리짱':a0_0xfae5a6(0x692),'デカヌチャン':a0_0xfae5a6(0x692),'바다그다':a0_0xfae5a6(0x3c0),'ウミディグダ':'Wiglett','바닥트리오':'Wugtrio','ウミトリオ':a0_0xfae5a6(0x3c5),'떨구새':a0_0xfae5a6(0x2f2)+'er','オトシドリ':a0_0xfae5a6(0x2f2)+'er','맨돌핀':'Finizen','ナミイルカ':a0_0xfae5a6(0x57f),'돌핀맨':'Palafin','イルカマン':a0_0xfae5a6(0x2e9),'부르롱':a0_0xfae5a6(0x24c),'ブロロン':a0_0xfae5a6(0x24c),'부르르룸':'Revavroo'+'m','ブロロローム':a0_0xfae5a6(0x1d3)+'m','모토마':a0_0xfae5a6(0x6aa),'モトトカゲ':a0_0xfae5a6(0x6aa),'꿈트렁':a0_0xfae5a6(0x4b0),'ミミズズ':a0_0xfae5a6(0x4b0),'초롱순':'Glimmet','キラーメ':'Glimmet','킬라플로르':a0_0xfae5a6(0x151),'キラフロル':a0_0xfae5a6(0x151),'망망이':'Greavard','ボチ':a0_0xfae5a6(0x5cd),'묘두기':'Houndsto'+'ne','ハカドッグ':a0_0xfae5a6(0x4cb)+'ne','꼬이밍고':'Flamigo','カラミンゴ':a0_0xfae5a6(0x4f7),'터벅고래':'Cetoddle','アルクジラ':a0_0xfae5a6(0x242),'우락고래':a0_0xfae5a6(0x563),'ハルクジラ':'Cetitan','가비루사':'Veluza','ミガルーサ':a0_0xfae5a6(0x5bd),'어써러셔':'Dondozo','ヘイラッシャ':a0_0xfae5a6(0x591),'싸리용':a0_0xfae5a6(0xca)+'i','シャリタツ':a0_0xfae5a6(0xca)+'i','저승갓숭':a0_0xfae5a6(0x5af)+'pe','コノヨザル':'Annihila'+'pe','토오':'Clodsire','ドオー':'Clodsire','키키링':a0_0xfae5a6(0x246)+'f','リキキリン':'Farigira'+'f','노고고치':a0_0xfae5a6(0x1a5)+a0_0xfae5a6(0x1ed),'ノココッチ':a0_0xfae5a6(0x1a5)+'rce','대도각참':a0_0xfae5a6(0x69e)+'t','ドドゲザン':a0_0xfae5a6(0x69e)+'t','위대한엄니':a0_0xfae5a6(0x602)+'sk','イダイナキバ':a0_0xfae5a6(0x602)+'sk','우렁찬꼬리':'Scream\x20T'+a0_0xfae5a6(0x271),'サケブシッポ':a0_0xfae5a6(0x605)+a0_0xfae5a6(0x271),'사나운버섯':a0_0xfae5a6(0x5a5)+a0_0xfae5a6(0x352),'アラブルタケ':a0_0xfae5a6(0x5a5)+a0_0xfae5a6(0x352),'날개치는머리':a0_0xfae5a6(0x34d)+a0_0xfae5a6(0x302),'ハバタクカミ':'Flutter\x20'+a0_0xfae5a6(0x302),'땅을기는날개':a0_0xfae5a6(0xf4)+'Wing','チヲハウハネ':a0_0xfae5a6(0xf4)+a0_0xfae5a6(0x686),'모래털가죽':a0_0xfae5a6(0x5fa)+'ocks','スナノケガワ':a0_0xfae5a6(0x5fa)+a0_0xfae5a6(0x10c),'무쇠바퀴':a0_0xfae5a6(0x17d)+'ads','テツノワダチ':'Iron\x20Tre'+'ads','무쇠보따리':a0_0xfae5a6(0x4ab)+a0_0xfae5a6(0x240),'テツノツツミ':a0_0xfae5a6(0x4ab)+a0_0xfae5a6(0x240),'무쇠손':a0_0xfae5a6(0x4c8)+'ds','テツノカイナ':a0_0xfae5a6(0x4c8)+'ds','무쇠머리':a0_0xfae5a6(0x590)+a0_0xfae5a6(0x1f7),'テツノコウベ':a0_0xfae5a6(0x590)+a0_0xfae5a6(0x1f7),'무쇠독나방':a0_0xfae5a6(0x68a)+'h','テツノドクガ':a0_0xfae5a6(0x68a)+'h','무쇠가시':a0_0xfae5a6(0x503)+a0_0xfae5a6(0x38c),'テツノイバラ':a0_0xfae5a6(0x503)+a0_0xfae5a6(0x38c),'드니차':a0_0xfae5a6(0x406),'セビエ':a0_0xfae5a6(0x406),'드니꽁':a0_0xfae5a6(0x337),'セゴール':a0_0xfae5a6(0x337),'드닐레이브':'Baxcalib'+'ur','セグレイブ':a0_0xfae5a6(0x138)+'ur','모으령':a0_0xfae5a6(0x4a0)+'ul','コレクレー':a0_0xfae5a6(0x4a0)+'ul','타부자고':a0_0xfae5a6(0x62e)+'o','サーフゴー':'Gholdeng'+'o','총지엔':a0_0xfae5a6(0x4a5),'チオンジェン':'Wo-Chien','파오젠':'Chien-Pa'+'o','パオジアン':a0_0xfae5a6(0x55c)+'o','딩루':a0_0xfae5a6(0x392),'ディンルー':a0_0xfae5a6(0x392),'위유이':'Chi-Yu','イーユイ':a0_0xfae5a6(0x3a4),'고동치는달':a0_0xfae5a6(0x1a6)+'Moon','トドロクツキ':a0_0xfae5a6(0x1a6)+'Moon','무쇠무인':'Iron\x20Val'+a0_0xfae5a6(0x6c8),'テツノブジン':a0_0xfae5a6(0x21d)+a0_0xfae5a6(0x6c8),'코라이돈':'Koraidon','コライドン':a0_0xfae5a6(0x45a),'미라이돈':a0_0xfae5a6(0x31e),'ミライドン':'Miraidon','굽이치는물결':'Walking\x20'+a0_0xfae5a6(0x31d),'ウネルミナモ':'Walking\x20'+'Wake','무쇠잎새':'Iron\x20Lea'+a0_0xfae5a6(0x4b5),'テツノイサハ':a0_0xfae5a6(0x2d7)+a0_0xfae5a6(0x4b5),'과미르':a0_0xfae5a6(0x2fa),'カミッチュ':a0_0xfae5a6(0x2fa),'차데스':a0_0xfae5a6(0x59b)+'eist','チャデス':a0_0xfae5a6(0x59b)+'eist','그우린차':a0_0xfae5a6(0x119)+'a','ヤバソチャ':'Sinistch'+'a','조타구':'Okidogi','イイネイヌ':a0_0xfae5a6(0x283),'이야후':'Munkidor'+'i','マシマシラ':a0_0xfae5a6(0x433)+'i','기로치':'Fezandip'+a0_0xfae5a6(0x385),'キチキギス':a0_0xfae5a6(0x183)+'iti','오거폰':a0_0xfae5a6(0x5d9),'オーガポン':a0_0xfae5a6(0x5d9),'브리두라스':'Archalud'+'on','ブリジュラス':a0_0xfae5a6(0x6e9)+'on','과미드라':a0_0xfae5a6(0x255)+'e','カミツオロチ':a0_0xfae5a6(0x255)+'e','꿰뚫는화염':a0_0xfae5a6(0x1d8)+a0_0xfae5a6(0x26c),'ウガツホムラ':a0_0xfae5a6(0x1d8)+'Fire','날뛰는우레':a0_0xfae5a6(0x693)+a0_0xfae5a6(0x347),'タケルライコ':a0_0xfae5a6(0x693)+a0_0xfae5a6(0x347),'무쇠암석':a0_0xfae5a6(0x353)+a0_0xfae5a6(0x4e1),'テツノイワオ':a0_0xfae5a6(0x353)+a0_0xfae5a6(0x4e1),'무쇠감투':a0_0xfae5a6(0x12d)+'wn','テツノカシラ':a0_0xfae5a6(0x12d)+'wn','테라파고스':a0_0xfae5a6(0x558)+'s','テラパゴス':'Terapago'+'s','복숭악동':a0_0xfae5a6(0xcb)+'t','モモワロウ':a0_0xfae5a6(0xcb)+'t'};function detectLang(_0x184a86){const _0x1613f1=a0_0xfae5a6;if(/[\uAC00-\uD7A3\u1100-\u11FF\u3130-\u318F]/['test'](_0x184a86))return'ko';if(/[\u3040-\u30FF\u4E00-\u9FFF]/[_0x1613f1(0x1b8)](_0x184a86))return'ja';return'en';}function translateQuery(_0x2c25d2){const _0xb3ff3=a0_0xfae5a6,_0x23b1c4=_0x2c25d2[_0xb3ff3(0x19c)]();if(!_0x23b1c4)return null;if(nameMap[_0x23b1c4])return nameMap[_0x23b1c4];if(_0x23b1c4['length']>=0x2){const _0xf75ff4=Object[_0xb3ff3(0x59d)](nameMap),_0x2c5fb5=_0xf75ff4[_0xb3ff3(0x3f6)](_0x1eeb2d=>_0x1eeb2d[_0xb3ff3(0x369)+'th'](_0x23b1c4));if(_0x2c5fb5[_0xb3ff3(0x4b7)]>0x0)return _0x2c5fb5[_0xb3ff3(0x3c2)]((_0x5d7f60,_0x31410d)=>_0x5d7f60[_0xb3ff3(0x4b7)]-_0x31410d[_0xb3ff3(0x4b7)]),nameMap[_0x2c5fb5[0x0]];const _0x40ff9c=_0xf75ff4[_0xb3ff3(0x67a)](_0x566787=>_0x566787[_0xb3ff3(0x6ac)](_0x23b1c4));if(_0x40ff9c)return nameMap[_0x40ff9c];}return null;}function showTlBanner(_0x59882c,_0x32a4a1,_0xc120cb){const _0x608408=a0_0xfae5a6,_0x23a969=document[_0x608408(0x258)+_0x608408(0x4c2)]('translat'+'eBanner');document['getEleme'+_0x608408(0x4c2)](_0x608408(0x3d6))[_0x608408(0x391)+_0x608408(0x595)]='\x22'+_0x59882c+'\x22',document[_0x608408(0x258)+_0x608408(0x4c2)]('tlEng')[_0x608408(0x391)+_0x608408(0x595)]='\x22'+_0x32a4a1+'\x22',document[_0x608408(0x258)+_0x608408(0x4c2)]('tlLang')[_0x608408(0x391)+_0x608408(0x595)]=_0xc120cb==='ko'?_0x608408(0x102):_0x608408(0x654),_0x23a969['classLis'+'t']['add'](_0x608408(0x438));}function hideTlBanner(){const _0x419dff=a0_0xfae5a6;document[_0x419dff(0x258)+_0x419dff(0x4c2)](_0x419dff(0x6b3)+_0x419dff(0x46e))[_0x419dff(0x653)+'t'][_0x419dff(0x365)](_0x419dff(0x438));}async function doSearch(_0x2e00f4=0x1){const _0x3abfce=a0_0xfae5a6,_0x293f37=document['getEleme'+_0x3abfce(0x4c2)](_0x3abfce(0x582)+'put')[_0x3abfce(0xc3)][_0x3abfce(0x19c)](),_0xdcbe45=!!(currentSetId||filterType||filterRarity);let _0x2a641e='';if(_0x293f37)_0x2a641e=_0x293f37;else!_0xdcbe45&&(_0x2a641e=currentQuery||_0x3abfce(0x617)+'d');const _0x129d63=detectLang(_0x2a641e);let _0x45593b=_0x2a641e;if(_0x2a641e&&_0x129d63!=='en'){const _0x1c133f=translateQuery(_0x2a641e);_0x1c133f?(showTlBanner(_0x2a641e,_0x1c133f,_0x129d63),_0x2a641e=_0x1c133f):hideTlBanner();}else hideTlBanner();if(_0x2a641e)currentQuery=_0x45593b;currentPage=_0x2e00f4;const _0x4c6793=API+_0x3abfce(0x6cd);setStatus(_0x3abfce(0x20d)+'.',_0x3abfce(0x192)),showSkeletons(),document[_0x3abfce(0x258)+_0x3abfce(0x4c2)](_0x3abfce(0x1c1))[_0x3abfce(0x16d)]['display']=_0x3abfce(0x4f2),document[_0x3abfce(0x258)+_0x3abfce(0x4c2)](_0x3abfce(0x1b6)+'on')[_0x3abfce(0x662)+'L']='';try{const _0x139fc0=_0x3d838e=>{const _0x451701=_0x3abfce,_0x4a013f=_0x3d838e['trim']();return _0x4a013f['includes']('\x20')?'name:\x22'+_0x4a013f+'\x22*':_0x451701(0x4cc)+_0x4a013f+'*';},_0x317ad9=[];if(_0x2a641e)_0x317ad9[_0x3abfce(0x60d)](_0x139fc0(_0x2a641e));if(currentSetId)_0x317ad9[_0x3abfce(0x60d)](_0x3abfce(0x39f)+currentSetId);if(filterType)_0x317ad9[_0x3abfce(0x60d)](_0x3abfce(0x2c2)+encodeURIComponent(filterType));if(filterRarity)_0x317ad9[_0x3abfce(0x60d)](_0x3abfce(0x6d5)+encodeURIComponent(filterRarity)+'\x22');const _0x4a255d=_0x317ad9['length']?_0x317ad9[_0x3abfce(0x6bc)]('\x20'):_0x139fc0(currentQuery||_0x3abfce(0x617)+'d'),_0x92619e=_0xdcbe45&&!_0x293f37,_0x5e565f=_0x92619e?0xfa:0x50,_0x3e4ad5=currentSetId?_0x3abfce(0x4f6):_0x3abfce(0x294)+'easeDate',_0x2ea850=API+_0x3abfce(0x6cd)+_0x4a255d+(_0x3abfce(0x249)+'e=')+_0x5e565f+(_0x3abfce(0x123)+'=')+_0x3e4ad5,_0x309a6d=getCached(_0x2ea850);if(_0x309a6d)allResults=_0x309a6d,document[_0x3abfce(0x258)+'ntById'](_0x3abfce(0x30d))[_0x3abfce(0x662)+'L']='';else{if(_abortCtrl)_abortCtrl['abort']();_abortCtrl=new AbortController();const _0xe27e9b=await fetch(_0x2ea850,{'signal':_abortCtrl[_0x3abfce(0x3b4)]});if(!_0xe27e9b['ok'])throw new Error(_0x3abfce(0x23b)+_0xe27e9b[_0x3abfce(0x279)]);const _0x49311e=await _0xe27e9b[_0x3abfce(0x1c2)]();allResults=_0x49311e[_0x3abfce(0x6dc)]||[],setCache(_0x2ea850,allResults);}if(!allResults[_0x3abfce(0x4b7)]){const _0x11e71a=currentSetId?_0x3abfce(0x613)+escHtml(currentSetName):'',_0x4fb855=filterType?_0x3abfce(0x224)+escHtml(filterType):'',_0x90d218=filterRarity?_0x3abfce(0x5d7)+escHtml(filterRarity):'';document[_0x3abfce(0x258)+_0x3abfce(0x4c2)](_0x3abfce(0x30d))[_0x3abfce(0x662)+'L']=_0x3abfce(0x60b)+_0x3abfce(0x46c)+_0x3abfce(0x4ac)+_0x3abfce(0x667)+'\x20\x20\x20\x20\x20\x20\x20<'+_0x3abfce(0x13f)+_0x3abfce(0x634)+_0x3abfce(0x40a)+_0x3abfce(0x29c)+_0x3abfce(0x6cf)+'\x20<h3>카드를'+_0x3abfce(0xf9)+_0x3abfce(0x470)+_0x3abfce(0x6cf)+_0x3abfce(0x143)+escHtml(_0x45593b||'전체')+_0x11e71a+_0x4fb855+_0x90d218+('\x20조건에\x20맞는\x20'+_0x3abfce(0x3c7)+_0x3abfce(0xc6)+_0x3abfce(0x6cf)+'필터\x20조건을\x20바'+'꿔보세요.</p'+_0x3abfce(0x6b0)+_0x3abfce(0x349)),setStatus('');return;}const _0x31985f=document['getEleme'+'ntById'](_0x3abfce(0x1d6)+'ct')[_0x3abfce(0xc3)],_0x578a6d=sortCards(allResults,_0x31985f),_0x58af04=filterByPrice(_0x578a6d);totalCards=_0x58af04[_0x3abfce(0x4b7)],renderPage(_0x58af04,_0x2e00f4),setStatus(''),document[_0x3abfce(0x258)+'ntById'](_0x3abfce(0x1c1))[_0x3abfce(0x16d)][_0x3abfce(0x398)]=_0x3abfce(0x350),document[_0x3abfce(0x258)+'ntById'](_0x3abfce(0x11e)+'nt')[_0x3abfce(0x391)+_0x3abfce(0x595)]=totalCards,renderPagination(_0x58af04),updateFilterBadge();}catch(_0x2f9e4e){if(_0x2f9e4e['name']==='AbortErr'+'or')return;setStatus('불러오기\x20실패:'+'\x20'+_0x2f9e4e[_0x3abfce(0x275)],'error'),document['getEleme'+_0x3abfce(0x4c2)](_0x3abfce(0x30d))[_0x3abfce(0x662)+'L']=_0x3abfce(0x532)+'ss=\x22empt'+_0x3abfce(0x588)+'class=\x22e'+'mpty-ico'+_0x3abfce(0x3ba)+_0x3abfce(0x598)+_0x3abfce(0x4e0)+'<p>'+escHtml(_0x2f9e4e[_0x3abfce(0x275)])+(_0x3abfce(0x195)+'v>');}}function renderPage(_0x289947,_0x4e08ff){const _0x125e0d=a0_0xfae5a6,_0x133c26=(_0x4e08ff-0x1)*PAGE_SIZE,_0x242912=_0x289947[_0x125e0d(0x6ab)](_0x133c26,_0x133c26+PAGE_SIZE),_0x37e6ac=Math[_0x125e0d(0x104)](_0x289947[_0x125e0d(0x4b7)]/PAGE_SIZE);document[_0x125e0d(0x258)+_0x125e0d(0x4c2)](_0x125e0d(0x4eb))['textCont'+'ent']=_0x4e08ff+_0x125e0d(0x3e0)+_0x37e6ac+'\x20페이지';const _0x199e28=document[_0x125e0d(0x258)+_0x125e0d(0x4c2)]('cardGrid');_0x199e28[_0x125e0d(0x662)+'L']='',_0x242912[_0x125e0d(0x52e)](_0x2a174f=>{const _0x454ac3=_0x125e0d;_0x199e28[_0x454ac3(0x58b)+'ild'](buildCard(_0x2a174f));});}function renderPagination(_0x304351){const _0x43faed=a0_0xfae5a6,_0xe7a40d=Math[_0x43faed(0x104)](_0x304351[_0x43faed(0x4b7)]/PAGE_SIZE);if(_0xe7a40d<=0x1)return;const _0x4b876d=document[_0x43faed(0x258)+_0x43faed(0x4c2)](_0x43faed(0x1b6)+'on');_0x4b876d[_0x43faed(0x662)+'L']='';const _0x36c21e=document['createEl'+_0x43faed(0x63a)](_0x43faed(0x270));_0x36c21e['classNam'+'e']=_0x43faed(0x596),_0x36c21e[_0x43faed(0x391)+_0x43faed(0x595)]=_0x43faed(0x2d4),_0x36c21e[_0x43faed(0x2c7)]=currentPage===0x1,_0x36c21e[_0x43faed(0x594)]=()=>{currentPage--,renderPage(_0x304351,currentPage),renderPagination(_0x304351),window['scrollTo']({'top':0x0,'behavior':'smooth'});},_0x4b876d[_0x43faed(0x58b)+_0x43faed(0x427)](_0x36c21e);const _0x1f8a7a=0x7;let _0x244fdf=Math[_0x43faed(0x1a2)](0x1,currentPage-0x3),_0x1dc3f5=Math[_0x43faed(0x5a4)](_0xe7a40d,_0x244fdf+_0x1f8a7a-0x1);if(_0x1dc3f5-_0x244fdf<_0x1f8a7a-0x1)_0x244fdf=Math[_0x43faed(0x1a2)](0x1,_0x1dc3f5-_0x1f8a7a+0x1);for(let _0x12f4a3=_0x244fdf;_0x12f4a3<=_0x1dc3f5;_0x12f4a3++){const _0xd98be3=document['createEl'+'ement'](_0x43faed(0x270));_0xd98be3['classNam'+'e']=_0x43faed(0x596)+(_0x12f4a3===currentPage?_0x43faed(0x69b):''),_0xd98be3[_0x43faed(0x391)+_0x43faed(0x595)]=_0x12f4a3;const _0x36d482=_0x12f4a3;_0xd98be3[_0x43faed(0x594)]=()=>{const _0x35129c=_0x43faed;currentPage=_0x36d482,renderPage(_0x304351,_0x36d482),renderPagination(_0x304351),window[_0x35129c(0x4e7)]({'top':0x0,'behavior':_0x35129c(0x407)});},_0x4b876d[_0x43faed(0x58b)+_0x43faed(0x427)](_0xd98be3);}const _0x288d9d=document['createEl'+_0x43faed(0x63a)](_0x43faed(0x270));_0x288d9d[_0x43faed(0x226)+'e']='page-btn',_0x288d9d[_0x43faed(0x391)+_0x43faed(0x595)]=_0x43faed(0x108),_0x288d9d[_0x43faed(0x2c7)]=currentPage===_0xe7a40d,_0x288d9d['onclick']=()=>{const _0x40c6d2=_0x43faed;currentPage++,renderPage(_0x304351,currentPage),renderPagination(_0x304351),window[_0x40c6d2(0x4e7)]({'top':0x0,'behavior':_0x40c6d2(0x407)});},_0x4b876d[_0x43faed(0x58b)+_0x43faed(0x427)](_0x288d9d);}function buildCard(_0x16a288){const _0x13dfdc=a0_0xfae5a6,_0x5401e8=document[_0x13dfdc(0x54f)+_0x13dfdc(0x63a)](_0x13dfdc(0x5be));_0x5401e8[_0x13dfdc(0x226)+'e']=_0x13dfdc(0x364);const _0x603f7f=_0x16a288['tcgplaye'+'r']?.[_0x13dfdc(0x12b)]||{},_0x340fc8=Object[_0x13dfdc(0x424)](_0x603f7f),_0x3f15ec=getPrimaryPrice(_0x16a288);let _0x215312='';_0x340fc8[_0x13dfdc(0x4b7)]===0x0?_0x215312=_0x13dfdc(0x532)+_0x13dfdc(0x47d)+_0x13dfdc(0x31b)+_0x13dfdc(0x21f)+_0x13dfdc(0x47d)+'e-grade\x22'+_0x13dfdc(0x5f1)+_0x13dfdc(0x1dc)+_0x13dfdc(0x5ec)+_0x13dfdc(0x557)+_0x13dfdc(0x1b3)+_0x13dfdc(0x1ba)+_0x13dfdc(0x6ea)+_0x13dfdc(0x6d7):_0x340fc8[_0x13dfdc(0x6ab)](0x0,0x2)['forEach'](([_0x28ec83,_0x86cf19])=>{const _0x43a941=_0x13dfdc,_0xbd0d54=_0x86cf19[_0x43a941(0xfa)]??_0x86cf19['mid'],_0x5e5764=_0x86cf19[_0x43a941(0x39a)]!=null?'$'+_0x86cf19['low']['toFixed'](0x2):'',_0x1e2951=_0x86cf19['high']!=null?'$'+_0x86cf19[_0x43a941(0x5e3)][_0x43a941(0x4c1)](0x2):'';_0x215312+='\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x43a941(0x46c)+_0x43a941(0x557)+_0x43a941(0x31c)+'\x0a\x20\x20\x20\x20\x20\x20\x20'+_0x43a941(0x622)+_0x43a941(0x60b)+_0x43a941(0x220)+_0x43a941(0x196)+_0x43a941(0x2e5)+'rade\x22>'+(gradeNames[_0x28ec83]||_0x28ec83)+('</div>\x0a\x20'+_0x43a941(0x6cf)+_0x43a941(0x52a))+(_0x5e5764&&_0x1e2951?_0x43a941(0x532)+'ss=\x22pric'+_0x43a941(0x6a3)+'>'+_0x5e5764+_0x43a941(0x49b)+_0x1e2951+_0x43a941(0x311):'')+(_0x43a941(0x60b)+'\x20\x20\x20</div'+'>\x0a\x20\x20\x20\x20\x20\x20'+_0x43a941(0x543)+'n\x20class='+_0x43a941(0x1f1)+'al')+(_0xbd0d54==null?'\x20none':'')+'\x22>'+(_0xbd0d54!=null?'$'+_0xbd0d54[_0x43a941(0x4c1)](0x2):'—')+(_0x43a941(0x41f)+_0x43a941(0x6cf)+_0x43a941(0x311));});const _0x4e82ef=_0x16a288[_0x13dfdc(0x1d9)+'r']?.['url']||null,_0x4aba17=isFav(_0x16a288['id']);if(_0x4aba17)_0x5401e8[_0x13dfdc(0x653)+'t'][_0x13dfdc(0x2f0)]('favorite'+'d');return _0x5401e8[_0x13dfdc(0x662)+'L']=_0x13dfdc(0x52b)+'v\x20class='+'\x22card-im'+'g-wrap\x22>'+_0x13dfdc(0x477)+_0x13dfdc(0x5ac)+'\x22'+(_0x16a288['images']?.['small']||'')+_0x13dfdc(0x5ff)+escHtml(_0x16a288[_0x13dfdc(0x5df)])+(_0x13dfdc(0x49a)+_0x13dfdc(0x3be)+_0x13dfdc(0x187)+_0x13dfdc(0x2db)+_0x13dfdc(0xbf)+_0x13dfdc(0x287)+'ne\x27;this'+_0x13dfdc(0x1b9)+_0x13dfdc(0x40f)+_0x13dfdc(0x1dd)+'e.displa'+_0x13dfdc(0x6d1)+_0x13dfdc(0x1da)+_0x13dfdc(0x12f)+_0x13dfdc(0x28e)+_0x13dfdc(0x144)+_0x13dfdc(0x31a)+_0x13dfdc(0x295)+_0x13dfdc(0x6a7)+'>🃏</div>'+_0x13dfdc(0x4ec))+(_0x16a288[_0x13dfdc(0xd8)]?'<div\x20cla'+_0x13dfdc(0x2fb)+_0x13dfdc(0x190)+'\x22>'+escHtml(_0x16a288[_0x13dfdc(0xd8)])+_0x13dfdc(0x311):'')+(_0x13dfdc(0x477)+_0x13dfdc(0xd6)+_0x13dfdc(0x4f9)+_0x13dfdc(0x3e4))+(_0x4aba17?'\x20active':'')+(_0x13dfdc(0x330)+'abel=\x22즐겨'+_0x13dfdc(0x505)+'\x20\x20\x20\x20\x20\x20\x20\x20'+'<span\x20cl'+'ass=\x22hea'+_0x13dfdc(0x2ec))+(_0x4aba17?'❤️':'🤍')+(_0x13dfdc(0x41f)+_0x13dfdc(0x481)+_0x13dfdc(0x1f4)+'\x20\x20\x20\x20\x20\x20<d'+'iv\x20class'+_0x13dfdc(0x512)+_0x13dfdc(0x55a)+_0x13dfdc(0x21f)+_0x13dfdc(0x1c7)+_0x13dfdc(0x368)+'\x22>🔍\x20상세\x20시'+'세\x20보기</sp'+_0x13dfdc(0x146)+_0x13dfdc(0x2b1)+_0x13dfdc(0x1a7)+_0x13dfdc(0x46c)+_0x13dfdc(0x2ad)+_0x13dfdc(0x536)+_0x13dfdc(0x477)+_0x13dfdc(0x13f)+_0x13dfdc(0x25d)+_0x13dfdc(0x53c)+'tle=\x22')+escHtml(_0x16a288['name'])+'\x22>'+escHtml(_0x16a288[_0x13dfdc(0x5df)])+(_0x13dfdc(0x29c)+_0x13dfdc(0x220)+_0x13dfdc(0x196)+_0x13dfdc(0x370)+'t\x22>')+escHtml(_0x16a288[_0x13dfdc(0x1a1)]?.['name']||'')+'\x20·\x20#'+escHtml(_0x16a288['number']||'')+(_0x13dfdc(0x29c)+'\x20\x20\x20\x20\x20')+_0x215312+(_0x13dfdc(0x39d)+_0x13dfdc(0x176)+'<div\x20cla'+'ss=\x22card'+_0x13dfdc(0x3dc)+_0x13dfdc(0x6b0))+(_0x4e82ef?_0x13dfdc(0x472)+_0x13dfdc(0x500)+_0x13dfdc(0x67c)+'href=\x22'+escHtml(_0x4e82ef)+(_0x13dfdc(0x6d4)+_0x13dfdc(0x4d8)+_0x13dfdc(0x5b3)+_0x13dfdc(0x36e)+'\x20data-ca'+'rd=\x22')+escHtml(_0x16a288[_0x13dfdc(0x5df)])+(_0x13dfdc(0x640)+_0x13dfdc(0x6cf)+'<span\x20cl'+_0x13dfdc(0x476)+_0x13dfdc(0x5e5)+_0x13dfdc(0x1e9)+_0x13dfdc(0x237)+'r에서\x20구매\x0a\x20'+'\x20\x20\x20\x20\x20\x20\x20\x20'+'\x20\x20</a>'):_0x13dfdc(0x5ec)+_0x13dfdc(0x2ad)+'d-buy-bt'+'n\x20disabl'+_0x13dfdc(0x2de)+_0x13dfdc(0x659)+_0x13dfdc(0x5f5))+(_0x13dfdc(0x39d)+_0x13dfdc(0x6d7)),_0x5401e8[_0x13dfdc(0x2c1)+_0x13dfdc(0x336)]('.fav-btn')['addEvent'+'Listener'](_0x13dfdc(0x356),_0x150015=>toggleFavorite(_0x16a288,_0x150015)),_0x5401e8['addEvent'+_0x13dfdc(0x2a5)](_0x13dfdc(0x356),_0x3b91bd=>{const _0xe48f1c=_0x13dfdc;if(_0x3b91bd[_0xe48f1c(0x175)][_0xe48f1c(0x4af)](_0xe48f1c(0x354)+_0xe48f1c(0x115))||_0x3b91bd[_0xe48f1c(0x175)][_0xe48f1c(0x4af)]('.fav-btn'))return;openModal(_0x16a288);}),_0x5401e8;}function showSkeletons(){const _0x1a5223=a0_0xfae5a6,_0x31034a=document['getEleme'+_0x1a5223(0x4c2)]('cardGrid');_0x31034a['innerHTM'+'L']='';for(let _0xcb31e=0x0;_0xcb31e<0xc;_0xcb31e++){_0x31034a[_0x1a5223(0x662)+'L']+=_0x1a5223(0x477)+_0x1a5223(0x13f)+_0x1a5223(0x6da)+_0x1a5223(0x528)+_0x1a5223(0x694)+_0x1a5223(0x6ed)+'=\x22skelet'+_0x1a5223(0x25a)+_0x1a5223(0x29c)+_0x1a5223(0x29a)+_0x1a5223(0x13f)+_0x1a5223(0x6da)+_0x1a5223(0x66e)+_0x1a5223(0x640)+_0x1a5223(0x220)+_0x1a5223(0x196)+_0x1a5223(0x566)+'n-line\x22>'+'</div>\x0a\x20'+_0x1a5223(0x6cf)+_0x1a5223(0x46c)+_0x1a5223(0x3b5)+'leton-li'+_0x1a5223(0x11b)+_0x1a5223(0x5ef)+_0x1a5223(0x60b)+_0x1a5223(0x12f)+_0x1a5223(0x3ea)+_0x1a5223(0x1fc)+_0x1a5223(0x495)+_0x1a5223(0x1a7)+_0x1a5223(0x30b)+'iv>\x0a\x20\x20\x20\x20'+_0x1a5223(0x349);}}function openModal(_0x18f017){const _0x15c321=a0_0xfae5a6;addRecent(_0x18f017),document[_0x15c321(0x258)+'ntById']('mImg')[_0x15c321(0x34c)]=_0x18f017[_0x15c321(0x2c6)]?.['large']||_0x18f017['images']?.[_0x15c321(0x26f)]||'',document[_0x15c321(0x258)+_0x15c321(0x4c2)](_0x15c321(0x621))[_0x15c321(0x345)]=_0x18f017[_0x15c321(0x5df)],document[_0x15c321(0x258)+_0x15c321(0x4c2)]('mName')[_0x15c321(0x391)+_0x15c321(0x595)]=_0x18f017[_0x15c321(0x5df)],document[_0x15c321(0x258)+_0x15c321(0x4c2)](_0x15c321(0x389))[_0x15c321(0x391)+_0x15c321(0x595)]=(_0x18f017['set']?.[_0x15c321(0x5df)]||'')+_0x15c321(0x648)+(_0x18f017[_0x15c321(0x1a1)]?.['series']||'')+_0x15c321(0x150)+(_0x18f017['number']||'')+_0x15c321(0x648)+(_0x18f017['set']?.[_0x15c321(0x6d3)+_0x15c321(0x250)]||'');const _0x48882c=document[_0x15c321(0x258)+_0x15c321(0x4c2)](_0x15c321(0x5a7));_0x48882c[_0x15c321(0x662)+'L']='',[_0x18f017['rarity'],_0x18f017[_0x15c321(0x2a4)+'e'],..._0x18f017[_0x15c321(0x3ce)]||[]][_0x15c321(0x3f6)](Boolean)[_0x15c321(0x52e)](_0x696643=>{const _0x5503a8=_0x15c321,_0x204069=document[_0x5503a8(0x54f)+_0x5503a8(0x63a)]('span');_0x204069[_0x5503a8(0x226)+'e']='tag',_0x204069[_0x5503a8(0x391)+_0x5503a8(0x595)]=_0x696643,_0x48882c[_0x5503a8(0x58b)+_0x5503a8(0x427)](_0x204069);});const _0x3fcf1e=document[_0x15c321(0x258)+_0x15c321(0x4c2)]('mLink');_0x18f017[_0x15c321(0x1d9)+'r']?.[_0x15c321(0x179)]?(_0x3fcf1e[_0x15c321(0x445)]=_0x18f017['tcgplaye'+'r']['url'],_0x3fcf1e[_0x15c321(0x16d)][_0x15c321(0x398)]=_0x15c321(0x350),_0x3fcf1e[_0x15c321(0x16d)][_0x15c321(0x5ba)]='1',_0x3fcf1e[_0x15c321(0x16d)][_0x15c321(0x1d1)+_0x15c321(0x418)]=_0x15c321(0x5dd),_0x3fcf1e[_0x15c321(0x662)+'L']='<span\x20cl'+_0x15c321(0x1d7)+_0x15c321(0x578)+_0x15c321(0x54a)+'/span>\x20T'+_0x15c321(0x214)+_0x15c321(0x333)+'→'):(_0x3fcf1e[_0x15c321(0x16d)][_0x15c321(0x398)]=_0x15c321(0x350),_0x3fcf1e[_0x15c321(0x16d)]['opacity']=_0x15c321(0x149),_0x3fcf1e[_0x15c321(0x16d)][_0x15c321(0x1d1)+_0x15c321(0x418)]=_0x15c321(0x4f2),_0x3fcf1e[_0x15c321(0x16d)][_0x15c321(0xba)+'nd']=_0x15c321(0x37b)+'rface2)',_0x3fcf1e['style'][_0x15c321(0xe3)]=_0x15c321(0x21c)+_0x15c321(0x5c9),_0x3fcf1e[_0x15c321(0x662)+'L']=_0x15c321(0x30f)+'없음');const _0x16110e=document[_0x15c321(0x258)+_0x15c321(0x4c2)](_0x15c321(0x3f2)+'dy');_0x16110e[_0x15c321(0x662)+'L']='';const _0x51cd11=_0x18f017[_0x15c321(0x1d9)+'r']?.[_0x15c321(0x12b)]||{},_0x1604dd=Object[_0x15c321(0x424)](_0x51cd11);!_0x1604dd['length']?_0x16110e['innerHTM'+'L']=_0x15c321(0x66d)+_0x15c321(0x14c)+_0x15c321(0x110)+_0x15c321(0xbc)+_0x15c321(0x317)+_0x15c321(0x261)+_0x15c321(0x449)+_0x15c321(0x587)+_0x15c321(0x5fc)+_0x15c321(0x53b)+_0x15c321(0x5fb)+'보가\x20없습니다<'+_0x15c321(0x689)+'>':_0x1604dd['forEach'](([_0x390dc7,_0x15bef9])=>{const _0x583651=_0x15c321,_0x56fe1d=document['createEl'+_0x583651(0x63a)]('tr');_0x56fe1d[_0x583651(0x662)+'L']=_0x583651(0x60b)+'\x20<td\x20cla'+_0x583651(0xc5)+'rade\x22>'+(gradeNames[_0x390dc7]||_0x390dc7)+('</td>\x0a\x20\x20'+_0x583651(0x40e)+_0x583651(0x5f0)+_0x583651(0x666)+_0x583651(0x437))+fmt(_0x15bef9['market'])+('</td>\x0a\x20\x20'+_0x583651(0x40e)+'d\x20class='+_0x583651(0x383)+'>')+fmt(_0x15bef9['low'])+(_0x583651(0x683)+_0x583651(0x40e)+_0x583651(0x5f0)+_0x583651(0x135)+'>')+fmt(_0x15bef9['mid'])+('</td>\x0a\x20\x20'+'\x20\x20\x20\x20\x20\x20<t'+_0x583651(0x5f0)+_0x583651(0x1ab)+'\x22>')+fmt(_0x15bef9['high'])+_0x583651(0x444),_0x16110e['appendCh'+'ild'](_0x56fe1d);}),document[_0x15c321(0x258)+_0x15c321(0x4c2)](_0x15c321(0x58c)+_0x15c321(0x172))[_0x15c321(0x653)+'t'][_0x15c321(0x2f0)]('open'),document['body'][_0x15c321(0x16d)][_0x15c321(0x57e)]='hidden';}function closeModal(){const _0x52995c=a0_0xfae5a6;document['getEleme'+_0x52995c(0x4c2)](_0x52995c(0x58c)+_0x52995c(0x172))[_0x52995c(0x653)+'t'][_0x52995c(0x365)](_0x52995c(0x3f9)),document[_0x52995c(0x377)][_0x52995c(0x16d)][_0x52995c(0x57e)]='';}function handleModalClick(_0x27b27e){const _0x53c661=a0_0xfae5a6;if(_0x27b27e[_0x53c661(0x175)]===document[_0x53c661(0x258)+_0x53c661(0x4c2)]('modalOve'+_0x53c661(0x172)))closeModal();}function setStatus(_0x459144,_0x446f0a=''){const _0x540e0e=a0_0xfae5a6,_0x42a626=document[_0x540e0e(0x258)+_0x540e0e(0x4c2)]('statusMs'+'g');_0x42a626[_0x540e0e(0x391)+'ent']=_0x459144,_0x42a626['classNam'+'e']=_0x540e0e(0x267)+'sg'+(_0x446f0a?'\x20'+_0x446f0a:'');}function resetSearch(){const _0x3d0ebd=a0_0xfae5a6;document['getEleme'+'ntById'](_0x3d0ebd(0x582)+_0x3d0ebd(0x68e))[_0x3d0ebd(0xc3)]='',document['getEleme'+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x1d6)+'ct')[_0x3d0ebd(0xc3)]='date',filterMin=null,filterMax=null,document[_0x3d0ebd(0x258)+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x2be))[_0x3d0ebd(0xc3)]='',document[_0x3d0ebd(0x258)+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x137))[_0x3d0ebd(0xc3)]='',document[_0x3d0ebd(0x258)+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x4aa)+_0x3d0ebd(0x534))['checked']=![],document[_0x3d0ebd(0x2c1)+_0x3d0ebd(0x1eb)](_0x3d0ebd(0x33c)+_0x3d0ebd(0x5b5))[_0x3d0ebd(0x52e)](_0x46c25b=>_0x46c25b['classLis'+'t'][_0x3d0ebd(0x365)](_0x3d0ebd(0x48d))),document[_0x3d0ebd(0x2c1)+'ector'](_0x3d0ebd(0x33c)+'btn[data'+_0x3d0ebd(0x4ed)+_0x3d0ebd(0x18e)+'x=\x22\x22]')[_0x3d0ebd(0x653)+'t']['add'](_0x3d0ebd(0x48d)),clearRarityType(),currentSetId=null,currentSetName='',document[_0x3d0ebd(0x258)+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x5b7)+'t')[_0x3d0ebd(0xc3)]='',document[_0x3d0ebd(0x258)+'ntById'](_0x3d0ebd(0x314))[_0x3d0ebd(0x391)+_0x3d0ebd(0x595)]='',document[_0x3d0ebd(0x258)+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x64f))['classLis'+'t'][_0x3d0ebd(0x365)](_0x3d0ebd(0x438)),document[_0x3d0ebd(0x258)+_0x3d0ebd(0x4c2)](_0x3d0ebd(0x253)+_0x3d0ebd(0x2d2))[_0x3d0ebd(0x653)+'t'][_0x3d0ebd(0x365)](_0x3d0ebd(0x438)),setChip(_0x3d0ebd(0x617)+'d'),doSearch(0x1);}function escHtml(_0x442a76){const _0x180446=a0_0xfae5a6;return String(_0x442a76||'')[_0x180446(0x204)](/&/g,'&amp;')['replace'](/</g,_0x180446(0x18c))['replace'](/>/g,'&gt;')[_0x180446(0x204)](/"/g,_0x180446(0x178));}function setChip(_0x426ab3){const _0x1a863e=a0_0xfae5a6;document[_0x1a863e(0x2c1)+'ectorAll']('.chip')[_0x1a863e(0x52e)](_0x253a35=>{const _0x3922ee=_0x1a863e;_0x253a35[_0x3922ee(0x653)+'t'][_0x3922ee(0x619)](_0x3922ee(0x48d),_0x253a35[_0x3922ee(0x29e)]['q']===_0x426ab3);}),_0x426ab3!==null&&(document[_0x1a863e(0x258)+_0x1a863e(0x4c2)](_0x1a863e(0x582)+_0x1a863e(0x68e))[_0x1a863e(0xc3)]='',currentQuery=_0x426ab3);}document[a0_0xfae5a6(0x2c1)+a0_0xfae5a6(0x1eb)]('.r-chip')[a0_0xfae5a6(0x52e)](_0x2da2a8=>{const _0x2d89d2=a0_0xfae5a6;_0x2da2a8[_0x2d89d2(0x33e)+'Listener']('click',()=>onRarityTypeChip(_0x2da2a8));}),document[a0_0xfae5a6(0x2c1)+'ectorAll']('.chip')['forEach'](_0x4a1941=>{const _0x3ec293=a0_0xfae5a6;_0x4a1941[_0x3ec293(0x33e)+'Listener']('click',()=>{setChip(_0x4a1941['dataset']['q']),doSearch(0x1);});}),document[a0_0xfae5a6(0x258)+a0_0xfae5a6(0x4c2)](a0_0xfae5a6(0x1d6)+'ct')[a0_0xfae5a6(0x33e)+'Listener'](a0_0xfae5a6(0x1a3),()=>{const _0x21e445=a0_0xfae5a6;if(allResults['length']){const _0x2e86bb=document[_0x21e445(0x258)+'ntById'](_0x21e445(0x1d6)+'ct')[_0x21e445(0xc3)],_0x51a7b0=sortCards(allResults,_0x2e86bb),_0x844092=filterByPrice(_0x51a7b0);currentPage=0x1,totalCards=_0x844092[_0x21e445(0x4b7)],document[_0x21e445(0x258)+_0x21e445(0x4c2)](_0x21e445(0x11e)+'nt')['textCont'+_0x21e445(0x595)]=totalCards,renderPage(_0x844092,0x1),renderPagination(_0x844092);}}),document[a0_0xfae5a6(0x258)+a0_0xfae5a6(0x4c2)](a0_0xfae5a6(0x4aa)+a0_0xfae5a6(0x534))[a0_0xfae5a6(0x33e)+a0_0xfae5a6(0x2a5)]('change',()=>{applyFilterAndRender();});let _isComposing=![];document[a0_0xfae5a6(0x258)+a0_0xfae5a6(0x4c2)]('searchIn'+a0_0xfae5a6(0x68e))['addEvent'+a0_0xfae5a6(0x2a5)](a0_0xfae5a6(0x402)+a0_0xfae5a6(0x5ee),()=>{_isComposing=!![];}),document['getEleme'+a0_0xfae5a6(0x4c2)](a0_0xfae5a6(0x582)+a0_0xfae5a6(0x68e))[a0_0xfae5a6(0x33e)+a0_0xfae5a6(0x2a5)](a0_0xfae5a6(0x402)+'ionend',()=>{_isComposing=![];}),document[a0_0xfae5a6(0x258)+a0_0xfae5a6(0x4c2)]('searchIn'+a0_0xfae5a6(0x68e))[a0_0xfae5a6(0x33e)+'Listener'](a0_0xfae5a6(0x4b1),_0xc38c88=>{const _0x27d879=a0_0xfae5a6;_0xc38c88[_0x27d879(0x1e6)]==='Enter'&&!_isComposing&&(setChip(null),doSearch(0x1));}),document[a0_0xfae5a6(0x258)+a0_0xfae5a6(0x4c2)](a0_0xfae5a6(0x582)+a0_0xfae5a6(0x68e))[a0_0xfae5a6(0x33e)+'Listener']('keyup',_0x873567=>{const _0x1d42ad=a0_0xfae5a6;_0x873567['key']===_0x1d42ad(0x1a4)&&!_isComposing&&(setChip(null),doSearch(0x1));}),[a0_0xfae5a6(0x2be),a0_0xfae5a6(0x137)][a0_0xfae5a6(0x52e)](_0x3dd56f=>{const _0x59e3c1=a0_0xfae5a6;document[_0x59e3c1(0x258)+_0x59e3c1(0x4c2)](_0x3dd56f)[_0x59e3c1(0x33e)+_0x59e3c1(0x2a5)](_0x59e3c1(0x4b1),_0x996ec=>{const _0x58bd47=_0x59e3c1;if(_0x996ec[_0x58bd47(0x1e6)]===_0x58bd47(0x1a4))applyCustomFilter();});}),document[a0_0xfae5a6(0x33e)+a0_0xfae5a6(0x2a5)](a0_0xfae5a6(0x4b1),_0x3fadda=>{const _0x10c78a=a0_0xfae5a6;_0x3fadda['key']===_0x10c78a(0x67e)&&(closeModal(),closeAbout());}),updateFavUI(),renderRecent(),loadSets(),doSearch(0x1);
+</script>
+</body>
+</html>
